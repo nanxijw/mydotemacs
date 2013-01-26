@@ -1,0 +1,5 @@
+# name: color
+# key: cl
+# contributor: jiangw
+# --
+{color:${1:red}}${1:$(if (string-match "red" text) "²»·ûºÏ" "·ûºÏ")}$0{color}

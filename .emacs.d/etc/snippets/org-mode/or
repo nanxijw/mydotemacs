@@ -1,0 +1,5 @@
+# name: 符合或不符合
+# key: or
+# contributor: jiangw
+# --
+{color:#0000ff}符合{color} 或 {color:#ff0000}不符合{color}。$0

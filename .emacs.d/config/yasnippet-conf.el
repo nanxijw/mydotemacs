@@ -1,0 +1,5 @@
+(add-pack-lib "yasnippet")
+(require 'yasnippet)
+(setq yas-snippet-dirs `(,(concat my-etc-dir "snippets")))
+(setq yas-prompt-functions '(yas-dropdown-prompt))
+(yas-global-mode 1)
