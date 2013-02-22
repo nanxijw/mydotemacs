@@ -39,5 +39,5 @@
 (global-set-key [(meta f3)] 'highlight-symbol-prev)
 (global-set-key [(control meta f3)] 'highlight-symbol-query-replace)
 (global-set-key [(control shift f3)] 'highlight-symbol-remove-all)
-;; helm
-(global-set-key (kbd "C-z h") 'helm-mini)
+;;;; helm
+;;(global-set-key (kbd "C-z h") 'helm-mini)

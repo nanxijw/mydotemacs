@@ -13,14 +13,3 @@
   (add-to-list 'load-path (concat my-lib-dir p)))
 
 (add-pack-lib "myplugin")
-
-(custom-set-variables
- '(case-fold-search nil);; 搜索区分大小写
- '(indicate-empty-lines t)
- '(make-backup-files nil)
- '(inhibit-startup-message t)
- '(show-paren-mode t)
- '(delete-selection-mode t)
- '(indent-tabs-mode nil)
- '(global-hl-line-mode t)
- )

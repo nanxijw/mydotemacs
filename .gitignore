@@ -20,3 +20,13 @@ ediff.el
 .emacs.d/.mc-lists.el
 .emacs.d/ac-comphist.dat
 .emacs.d/server
+.emacs.d/tramp
+.emacs.d/lib/unloaded
+.emacs.d/lib/geiser-0.3
+.emacs.d/lib/games
+.emacs.d/elpa
+simplified
+traditional
+mplayer
+_viminfo
+.geiser_history.racket

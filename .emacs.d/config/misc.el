@@ -27,10 +27,10 @@
 (require 'highlight-symbol)
 ;; color-moccur
 (require 'color-moccur)
-;; helm
-;;(add-pack-lib "helm")
-;;(require 'helm-config)
-;;Ì«Âý£¬ÆÁ±ÎÖ® (helm-mode 1)
+;; ;; helm
+;; (add-pack-lib "helm")
+;; (require 'helm-config)
+;;;;Ì«Âý£¬ÆÁ±ÎÖ® (helm-mode 1)
 
 ;;ÅäÉ«
 (add-pack-lib "color-theme")

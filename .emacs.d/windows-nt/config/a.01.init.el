@@ -33,4 +33,5 @@
 (global-set-key [(mouse-3)] 'paste-from-pasteboard);; 鼠标中键粘贴
 
 ;; 设置进程的默认编码方式为gbk
-(setq default-process-coding-system '(gbk . gbk))
+;; 会导致tramp输入密码无法被识别，屏蔽
+;; (setq default-process-coding-system '(gbk . gbk))

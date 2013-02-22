@@ -43,6 +43,8 @@
 
 ;; ;; rainbow-delimiters
 (require 'rainbow-delimiters)
+(dolist (x '(scheme emacs-lisp lisp))
+  (add-hook (intern (concat (symbol-name x) "-mode-hook")) 'rainbow-delimiters-mode))
 
 ;; 输入左边的括号，就会自动补全右边的部分.包括(), "", [] , {} , 等等。
 (defun my-common-mode-auto-pair ()
@@ -62,7 +64,8 @@
 (local-set-key (kbd "{") 'skeleton-pair-insert-maybe)
 ;(local-set-key (kbd "\'") 'skeleton-pair-insert-maybe)
 (local-set-key (kbd "[") 'skeleton-pair-insert-maybe))
-
-(dolist (x '(scheme emacs-lisp lisp c c++))
-  (add-hook (intern (concat (symbol-name x) "-mode-hook")) 'my-common-mode-auto-pair)
-  (add-hook (intern (concat (symbol-name x) "-mode-hook")) 'rainbow-delimiters-mode))
+(dolist (x '(c c++))
+  (add-hook (intern (concat (symbol-name x) "-mode-hook")) 'my-common-mode-auto-pair))
+(require 'paredit)
+(dolist (x '(emacs-lisp lisp scheme))
+  (add-hook (intern (concat (symbol-name x) "-mode-hook")) 'enable-paredit-mode))
