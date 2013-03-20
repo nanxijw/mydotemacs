@@ -7,13 +7,21 @@
 (run-with-idle-timer 0.5 nil 'w32-send-sys-command 61488)
 
 ;; 把kill-ring和系统剪贴板分开(Windows);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq interprogram-cut-function nil)
-(setq interprogram-paste-function nil)
+;; (setq interprogram-cut-function 'w32-set-clipboard-data)
+(setq interprogram-cut-function '(lambda (text)
+                                   (let ((clipboard-text (w32-get-clipboard-data)))
+                                     (when clipboard-text
+                                       (setq x-last-selected-text clipboard-text))
+                                     (w32-set-clipboard-data text))))
+;; (setq interprogram-paste-function nil)
 (defun paste-from-pasteboard ()
   (interactive)
   (and mark-active (filter-buffer-substring (region-beginning) (region-end) t))
-  (insert (w32-get-clipboard-data))
-  )
+  (let ((text (w32-get-clipboard-data)))
+    (when text
+      (setq x-last-selected-text text))
+    (insert x-last-selected-text)))
+
 (defun copy-to-pasteboard (p1 p2)
   (interactive "r*")
   (w32-set-clipboard-data (buffer-substring p1 p2))
@@ -35,3 +43,7 @@
 ;; 设置进程的默认编码方式为gbk
 ;; 会导致tramp输入密码无法被识别，屏蔽
 ;; (setq default-process-coding-system '(gbk . gbk))
+
+;; 设置环境变量
+(setenv "PATH" (concat "e:/programs/gnuwin32/bin;" (getenv "PATH")))
+(setq exec-path (cons "e:/programs/gnuwin32/bin/" exec-path))

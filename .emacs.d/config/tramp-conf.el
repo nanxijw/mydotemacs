@@ -7,3 +7,5 @@
   (setq tramp-default-method "ssh")))
 ;; 指定默认用户名
 (setq tramp-default-user "cc")
+
+(setq password-cache-expiry 36000)

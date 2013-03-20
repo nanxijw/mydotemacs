@@ -11,12 +11,12 @@
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
-;; 
+;;
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;; 
+;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;;
@@ -201,8 +201,9 @@
 )
 
 ;; Key mapping of gtags-select-mode.
-(if gtags-suggested-key-mapping
-    (progn
+;; (if gtags-suggested-key-mapping
+(if 1
+ (progn
       (define-key gtags-select-mode-map "\e*" 'gtags-pop-stack)
       (define-key gtags-select-mode-map "\^?" 'scroll-down)
       (define-key gtags-select-mode-map " " 'scroll-up)
@@ -215,13 +216,14 @@
       (define-key gtags-select-mode-map "q" 'gtags-pop-stack)
       (define-key gtags-select-mode-map "u" 'gtags-pop-stack)
       (define-key gtags-select-mode-map "\C-t" 'gtags-pop-stack)
+      (define-key gtags-mode-map "\e*" 'gtags-pop-stack)
       (define-key gtags-select-mode-map "\C-m" 'gtags-select-tag)
       (define-key gtags-select-mode-map "\C-o" 'gtags-select-tag-other-window)
       (define-key gtags-select-mode-map "\e." 'gtags-select-tag)
       (if gtags-disable-pushy-mouse-mapping nil
         (define-key gtags-select-mode-map [mouse-3] 'gtags-pop-stack)
-        (define-key gtags-select-mode-map [mouse-2] 'gtags-select-tag-by-event)))
-)
+        (define-key gtags-select-mode-map [mouse-2] 'gtags-select-tag-by-event))))
+
 ;; This is only one exception of the policy.
 
 ;;
@@ -492,7 +494,7 @@
 (eval-and-compile
   (if (not (fboundp 'event-point))
       (defun event-point (event)
-	(posn-point (event-start event)))))
+        (posn-point (event-start event)))))
 
 (defun gtags-find-tag-by-event (event)
   "Get the expression as a tagname around here and move there."
@@ -546,12 +548,12 @@
          ; Gtags select mode buffer is always deleted.
          (if (and (or gtags-pop-delete (equal mode-name "Gtags-Select"))
                   (not (gtags-exist-in-stack (current-buffer))))
-	     (setq delete t))
+             (setq delete t))
       (setq context (gtags-pop-context))
       (if (not context)
-	  (message "The tags stack is empty.")
+          (message "The tags stack is empty.")
         (if delete
-	    (kill-buffer (current-buffer)))
+            (kill-buffer (current-buffer)))
         (switch-to-buffer (nth 0 context))
         (setq gtags-current-buffer (current-buffer))
         (goto-char (nth 1 context))))))
@@ -636,7 +638,7 @@
     (if (not (= 0 (if (equal flag "C")
                       (call-process gtags-global-command nil t nil option "--encode-path=\" \t\"" context tagname)
                       (call-process gtags-global-command nil t nil option "--encode-path=\" \t\"" tagname))))
-	(progn (message (buffer-substring (point-min)(1- (point-max))))
+        (progn (message (buffer-substring (point-min)(1- (point-max))))
                (gtags-pop-context))
       (goto-char (point-min))
       (setq lines (count-lines (point-min) (point-max)))
@@ -653,17 +655,17 @@
            (message "%s: symbol not found" tagname))
           (t
            (message "%s: tag not found" tagname)))
-	(gtags-pop-context)
-	(kill-buffer buffer)
-	(set-buffer save))
+        (gtags-pop-context)
+        (kill-buffer buffer)
+        (set-buffer save))
        ((= 1 lines)
-	(message "Searching %s ... Done" tagname)
-	(gtags-select-it t other-win))
+        (message "Searching %s ... Done" tagname)
+        (gtags-select-it t other-win))
        (t
         (if (null other-win)
             (switch-to-buffer buffer)
           (switch-to-buffer-other-window buffer))
-	(gtags-select-mode))))))
+        (gtags-select-mode))))))
 
 ;; select a tag line from lines
 (defun gtags-select-it (delete &optional other-win)
@@ -681,14 +683,14 @@
       ;; will be changed. This might cause loading error, if you use relative
       ;; path in [GTAGS SELECT MODE], because emacs's buffer has its own
       ;; current directory.
-      ;; 
+      ;;
       (let ((prev-buffer (current-buffer)))
         ;; move to the context
-        (if gtags-read-only 
-	    (if (null other-win) (find-file-read-only file) 
-	      (find-file-read-only-other-window file))
-	  (if (null other-win) (find-file file)
-	    (find-file-other-window file)))
+        (if gtags-read-only
+            (if (null other-win) (find-file-read-only file)
+              (find-file-read-only-other-window file))
+          (if (null other-win) (find-file file)
+            (find-file-other-window file)))
         (if delete (kill-buffer prev-buffer)))
       (setq gtags-current-buffer (current-buffer))
       (goto-line line)
@@ -705,31 +707,31 @@
   "Toggle Gtags mode, a minor mode for browsing source code using GLOBAL.
 
 Specify the root directory of project.
-	\\[gtags-visit-rootdir]
+        \\[gtags-visit-rootdir]
 Input tag name and move to the definition.
-	\\[gtags-find-tag]
+        \\[gtags-find-tag]
 Input tag name and move to the definition in other window.
         \\[gtags-find-tag-other-window]
 Input tag name and move to the referenced point.
-	\\[gtags-find-rtag]
+        \\[gtags-find-rtag]
 Input symbol and move to the locations.
-	\\[gtags-find-symbol]
+        \\[gtags-find-symbol]
 Input pattern, search with grep(1) and move to the locations.
-	\\[gtags-find-with-grep]
+        \\[gtags-find-with-grep]
 Input pattern, search with idutils(1) and move to the locations.
-	\\[gtags-find-with-idutils]
+        \\[gtags-find-with-idutils]
 Input pattern and move to the top of the file.
-	\\[gtags-find-file]
+        \\[gtags-find-file]
 Input pattern and show the list of definitions of the file.
-	\\[gtags-parse-file]
+        \\[gtags-parse-file]
 Get the expression as a tagname around here and move there.
-	\\[gtags-find-tag-from-here]
+        \\[gtags-find-tag-from-here]
 Display current screen on hypertext browser.
-	\\[gtags-display-browser]
+        \\[gtags-display-browser]
 Get the expression as a tagname around here and move there.
-	\\[gtags-find-tag-by-event]
+        \\[gtags-find-tag-by-event]
 Move to previous point on the stack.
-	\\[gtags-pop-stack]
+        \\[gtags-pop-stack]
 
 Key definitions:
 \\{gtags-mode-map}
@@ -752,9 +754,9 @@ with no args, if that value is non-nil."
   "Major mode for choosing a tag from tags list.
 
 Select a tag in tags list and move there.
-	\\[gtags-select-tag]
+        \\[gtags-select-tag]
 Move to previous point on the stack.
-	\\[gtags-pop-stack]
+        \\[gtags-pop-stack]
 
 Key definitions:
 \\{gtags-select-mode-map}
@@ -764,7 +766,7 @@ Turning on Gtags-Select mode calls the value of the variable
   (kill-all-local-variables)
   (use-local-map gtags-select-mode-map)
   (setq buffer-read-only t
-	truncate-lines t
+        truncate-lines t
         major-mode 'gtags-select-mode
         mode-name "Gtags-Select")
   (setq gtags-current-buffer (current-buffer))

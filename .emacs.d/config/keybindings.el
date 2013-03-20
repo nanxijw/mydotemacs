@@ -28,7 +28,7 @@
 (global-set-key (kbd "C-c d f") 'diff-buffer-with-file)
 
 ;;browse kill ring (visual paste)
-(global-set-key (kbd "M-y") 'browse-kill-ring)
+(global-set-key (kbd "C-M-y") 'browse-kill-ring)
 ;;make ^h delete rather than help
 (global-set-key (kbd "C-h") 'delete-backward-char)
 
@@ -41,3 +41,17 @@
 (global-set-key [(control shift f3)] 'highlight-symbol-remove-all)
 ;;;; helm
 ;;(global-set-key (kbd "C-z h") 'helm-mini)
+
+;; 设置emacs的透明度
+(global-set-key [(f12)] 'loop-alpha)  ;;注意这行中的F12 , 可以改成你想要的按键
+(setq alpha-list '((80 100) (100 100)))
+(defun loop-alpha ()
+  (interactive)
+  (let ((h (car alpha-list)))
+    ((lambda (a ab)
+       (set-frame-parameter (selected-frame) 'alpha (list a ab))
+       (add-to-list 'default-frame-alist (cons 'alpha (list a ab)))
+       ) (car h) (car (cdr h)))
+    (setq alpha-list (cdr (append alpha-list (list h))))
+    )
+)
