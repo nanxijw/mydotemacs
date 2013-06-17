@@ -9,7 +9,7 @@
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
 ;;remove all trailing whitespace and trailing blank lines before saving the file
-(add-hook 'before-save-hook 'whitespace-cleanup)
+;;(add-hook 'before-save-hook 'whitespace-cleanup)
 
 ;; let gtags-mode is on in c-mode
 (add-hook 'c-mode-hook

@@ -33,9 +33,10 @@
 ;;;;Ì«Âý£¬ÆÁ±ÎÖ® (helm-mode 1)
 
 ;;ÅäÉ«
-(add-pack-lib "color-theme")
-(require 'color-theme)
-(eval-after-load "color-theme"
-  '(progn
-     (color-theme-initialize)
-     (color-theme-molokai)))
+;; (add-pack-lib "color-theme")
+;; (require 'color-theme)
+;; (eval-after-load "color-theme"
+;;   '(progn
+;;      (color-theme-initialize)
+;;      (zenburn)))
+(load-theme 'solarized-light t)

@@ -44,7 +44,7 @@
 
 ;; 设置emacs的透明度
 (global-set-key [(f12)] 'loop-alpha)  ;;注意这行中的F12 , 可以改成你想要的按键
-(setq alpha-list '((80 100) (100 100)))
+(setq alpha-list '((70 100) (100 100)))
 (defun loop-alpha ()
   (interactive)
   (let ((h (car alpha-list)))

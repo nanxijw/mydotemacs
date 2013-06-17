@@ -3,8 +3,19 @@
 (setq frame-title-format '(buffer-file-name "%f" ("%b")))
 ;; 启用服务器模式
 (server-start)
+
+;; 最大化、還原窗口大小
+(setq my-w32-command-list '(61488 . 61728))
+(defun loop-frame-size ()
+  (interactive)
+  (let ((command (car my-w32-command-list)))
+    (w32-send-sys-command (car my-w32-command-list))
+    (setq my-w32-command-list (cons (cdr my-w32-command-list) (car my-w32-command-list)))))
+
+(global-set-key [(f11)] 'loop-frame-size)
+
 ;;启动0.5秒后自动最大化 （windows下）
-(run-with-idle-timer 0.5 nil 'w32-send-sys-command 61488)
+(run-with-idle-timer 0.5 nil 'loop-frame-size)
 
 ;; 把kill-ring和系统剪贴板分开(Windows);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (setq interprogram-cut-function 'w32-set-clipboard-data)
