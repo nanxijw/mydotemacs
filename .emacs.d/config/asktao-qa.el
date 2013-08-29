@@ -1,24 +1,24 @@
-(defvar design-calc-something-need-replace 
-  '(("int" . "floor")
-    ("（". "(")
-    ("）" . ")")
-    ("，" . ")")
-    ("\\(\\w+ */ *\\w+\\)" . "(\\1)")
-    ("RRS(\\([0-9]+\\))" . "(100 + random(\\1*2 + 1) - \\1)")))
+;; (defvar design-calc-something-need-replace
+;;   '(("int" . "floor")
+;;     ("（". "(")
+;;     ("）" . ")")
+;;     ("，" . ")")
+;;     ("\\(\\w+ */ *\\w+\\)" . "(\\1)")
+;;     ("RRS(\\([0-9]+\\))" . "(100 + random(\\1*2 + 1) - \\1)")))
 
-(defun design-calc-translate-formula (translate-list formula)
-  (if (eq translate-list nil)
-      formula
-    (design-calc-translate-formula 
-     (cdr translate-list)
-     (replace-regexp-in-string (caar translate-list)
-                               (cdar translate-list)
-                               formula t))))
+;; (defun design-calc-translate-formula (translate-list formula)
+;;   (if (eq translate-list nil)
+;;       formula
+;;     (design-calc-translate-formula
+;;      (cdr translate-list)
+;;      (replace-regexp-in-string (caar translate-list)
+;;                                (cdar translate-list)
+;;                                formula t))))
 
-(defun design-calc-eval (formula &optional translate-list)
-  (calc-eval (design-calc-translate-formula 
-              (append design-calc-something-need-replace translate-list)
-              formula)))
+;; (defun design-calc-eval (formula &optional translate-list)
+;;   (calc-eval (design-calc-translate-formula
+;;               (append design-calc-something-need-replace translate-list)
+;;               formula)))
 
 (defun get-res-text-file (&optional buffer)
   "根据当前文件路径得到文字资源文件路径"
@@ -45,7 +45,7 @@
   (unless (bufferp buffer)
     (setq buffer (current-buffer)))
   (let (beg end resource-id resource-text text
-            (text (with-current-buffer (find-file-noselect 
+            (text (with-current-buffer (find-file-noselect
                                         (get-res-text-file buffer))
                     (buffer-substring-no-properties (point-min) (point-max)))))
     (if mark-active
@@ -59,7 +59,7 @@
     ;; 替换的过程中会改变region的长度，因此需要从后往前替换
     (while (re-search-backward "\\$\\$\\([0-9]+\\)" beg t)
       (setq end (point))
-      (setq resource-text 
+      (setq resource-text
             (save-match-data
               (setq resource-id (match-string-no-properties 1))
               (string-match (concat "^" resource-id " +\\(\".+\"\\)") text)

@@ -41,9 +41,6 @@
 (global-set-key (kbd "M-k") 'qiang-copy-line)
 (global-set-key [remap goto-line] 'goto-line-with-feedback)
 
-(require 'move-text)
-(move-text-default-bindings)
-
 (add-pack-lib "expand-region")
 (require 'expand-region)
 

@@ -5,17 +5,17 @@
 (server-start)
 
 ;; 最大化、還原窗口大小
-(setq my-w32-command-list '(61488 . 61728))
-(defun loop-frame-size ()
-  (interactive)
-  (let ((command (car my-w32-command-list)))
-    (w32-send-sys-command (car my-w32-command-list))
-    (setq my-w32-command-list (cons (cdr my-w32-command-list) (car my-w32-command-list)))))
+;; (setq my-w32-command-list '(61488 . 61728))
+;; (defun loop-frame-size ()
+;;   (interactive)
+;;   (let ((command (car my-w32-command-list)))
+;;     (w32-send-sys-command (car my-w32-command-list))
+;;     (setq my-w32-command-list (cons (cdr my-w32-command-list) (car my-w32-command-list)))))
 
-(global-set-key [(f11)] 'loop-frame-size)
+;; (global-set-key [(f11)] 'loop-frame-size)
 
 ;;启动0.5秒后自动最大化 （windows下）
-(run-with-idle-timer 0.5 nil 'loop-frame-size)
+;; (run-with-idle-timer 0.5 nil 'loop-frame-size)
 
 ;; 把kill-ring和系统剪贴板分开(Windows);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (setq interprogram-cut-function 'w32-set-clipboard-data)
@@ -35,12 +35,13 @@
 
 (defun copy-to-pasteboard (p1 p2)
   (interactive "r*")
-  (w32-set-clipboard-data (buffer-substring p1 p2))
-  (message "Copied selection to clipboard")
-  )
+  ;; (w32-set-clipboard-data (buffer-substring p1 p2))
+  (setq x-last-selected-text (buffer-substring p1 p2))
+  (message "Copied selection to clipboard"))
 (defun cut-to-pasteboard (p1 p2)
   (interactive "r*")
-  (w32-set-clipboard-data (filter-buffer-substring p1 p2 t)))
+  ;; (w32-set-clipboard-data (filter-buffer-substring p1 p2 t))
+  (setq x-last-selected-text (filter-buffer-substring p1 p2 t)))
 
 ;;系统剪贴板快捷键（C-z C-c复制，C-z C-v粘贴）
 (global-set-key (kbd "s-v") 'paste-from-pasteboard)
@@ -58,3 +59,12 @@
 ;; 设置环境变量
 (setenv "PATH" (concat "e:/programs/gnuwin32/bin;" (getenv "PATH")))
 (setq exec-path (cons "e:/programs/gnuwin32/bin/" exec-path))
+
+
+ (defun dd-term-telnet(host)
+   "dd telnet"
+   (interactive "Maddress:")
+   (ansi-term "telnet")
+   (term-line-mode)
+   (insert (concat (concat "open " host ) "\n"))
+   )

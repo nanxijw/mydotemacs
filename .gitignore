@@ -30,6 +30,7 @@ ediff.el
 .emacs.d/elpa
 .emacs.d/bookmarks
 .emacs.d/.org-id-locations
+.emacs.d/config/asktao-qa.el
 simplified
 traditional
 mplayer
@@ -37,3 +38,6 @@ _viminfo
 .geiser_history.racket
 .thumbnails/
 javacp/
+_vimperatorrc
+vimperator
+.emacs.d/config/unused/sematic-conf.el

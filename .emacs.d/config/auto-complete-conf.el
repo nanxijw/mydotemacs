@@ -15,7 +15,7 @@
 (setq ac-use-quick-help nil)
 (setq ac-disable-inline t)
 (setq ac-show-menu-immediately-on-auto-complete t)
-(setq ac-auto-start nil)
+(setq ac-auto-start 2)
 (setq ac-expand-on-auto-complete nil)
 (setq ac-candidate-menu-min 0)
 (setq ac-ignore-case nil)

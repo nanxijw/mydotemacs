@@ -1,9 +1,0 @@
-# -*- mode: snippet -*-
-# name: private
-# key: private
-# contributor: jiangw
-# --
-private ${1:void} ${2:function}($3)
-{
-    $4
-}

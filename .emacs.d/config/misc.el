@@ -32,11 +32,4 @@
 ;; (require 'helm-config)
 ;;;;Ì«Âý£¬ÆÁ±ÎÖ® (helm-mode 1)
 
-;;ÅäÉ«
-;; (add-pack-lib "color-theme")
-;; (require 'color-theme)
-;; (eval-after-load "color-theme"
-;;   '(progn
-;;      (color-theme-initialize)
-;;      (zenburn)))
-(load-theme 'solarized-light t)
+(load-theme 'solarized-dark t)
