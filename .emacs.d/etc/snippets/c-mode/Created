@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: Created
+# key: Created
+# --
+// `(file-name-nondirectory (buffer-file-name))`
+// Created by ${1:jiangw} `(format "%s/%s" (calendar-month-name
+                                               (string-to-number (format-time-string "%m")) t)
+                                           (format-time-string "%d/%G"))`
+// $0
