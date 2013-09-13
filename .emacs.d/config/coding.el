@@ -1,14 +1,16 @@
 ;; 我的C/C++语言编辑策略
 (defun my-c-mode-common-hook()
-  (setq tab-width 4 indent-tabs-mode nil) ;; 用4个空格作为1个缩进宽度，不使用tab缩进
-  ;; hungry-delete and auto-newline
+  ;; insert spaces instead of tabs, and each tab will, be inserted
+  ;; with 4 spaces instead
+  (setq tab-width 4 indent-tabs-mode nil)
+  ;;;; hungry-delete and auto-newline
   ;; (c-toggle-auto-hungry-state 1)
   (c-set-style "stroustrup")
-  (gtags-mode 1)
-)
+  (gtags-mode 1))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
-;;remove all trailing whitespace and trailing blank lines before saving the file
+;; remove all trailing whitespace and trailing blank lines before
+;; saving the file
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
 ;; dos batch file

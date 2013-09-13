@@ -42,3 +42,4 @@ _vimperatorrc
 vimperator
 .emacs.d/config/unused/sematic-conf.el
 .hilfe_history
+.emacs.d/ede-projects.el

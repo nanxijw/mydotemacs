@@ -13,7 +13,6 @@
 (define-key global-map [(f6)] 'org-capture)
 
 ;; multiple-cursors
-;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
@@ -39,8 +38,6 @@
 (global-set-key [(meta f3)] 'highlight-symbol-prev)
 (global-set-key [(control meta f3)] 'highlight-symbol-query-replace)
 (global-set-key [(control shift f3)] 'highlight-symbol-remove-all)
-;;;; helm
-;;(global-set-key (kbd "C-z h") 'helm-mini)
 
 ;; 设置emacs的透明度
 (global-set-key [(f12)] 'loop-alpha)  ;;注意这行中的F12 , 可以改成你想要的按键
@@ -52,6 +49,4 @@
        (set-frame-parameter (selected-frame) 'alpha (list a ab))
        (add-to-list 'default-frame-alist (cons 'alpha (list a ab)))
        ) (car h) (car (cdr h)))
-    (setq alpha-list (cdr (append alpha-list (list h))))
-    )
-)
+    (setq alpha-list (cdr (append alpha-list (list h))))))

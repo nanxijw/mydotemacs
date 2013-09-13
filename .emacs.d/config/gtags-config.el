@@ -12,5 +12,4 @@
   '(lambda ()
      (define-key gtags-mode-map "\e*" 'gtags-pop-stack)
      (define-key gtags-mode-map "\e." 'gtags-find)
-     (define-key gtags-mode-map "\C-x4." 'gtags-find-tag-other-window)
-))
+     (define-key gtags-mode-map "\C-x4." 'gtags-find-tag-other-window)))

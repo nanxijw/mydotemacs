@@ -67,8 +67,40 @@ h2. 五、测试步骤：
 
 h2. 六、验收结果：{color:#0000ff}通过{color}或{color:red}不通过{color}
 
-h2. 备注 ：无
+h2. 测试检查点：
+{testplan:测试检查点|includeJiraLinks=false|useFailMacro=no}
+确认消耗道具或元宝是否记录[apply_log|ASKTAOPUBLIC:apply_log表log记录需求设定(design)]
+确认服务器端没有报错，客户端log正常、内存没有泄露
+奖励是否都有记录LOG日志，奖励调整是否有进行LOG日志调整
+新增金钱奖励时，是否有纳入金钱统计
+确认是否需要在[维护时需配置内容]中配置相关内容
+{testplan}
+图释：
+(/) 表示该检查点已进行确认并通过测试
+(x) 表示该检查点已进行确认但需做修改
+(!) 表示该检查点未进行确认操作
+{color:green}所有测试检查点都pass表示确认通过{color}
+
+h2. 备注：无
 
 h2. 测试要点：无
 
-h2. 相关链接 ：{incoming-links:mode=flat|separator=pipe|spaces=@global}无{incoming-links} 
+h2. 相关链接：{incoming-links:mode=flat|separator=pipe|spaces=@global}无{incoming-links}
+
+h2. 审核结果：
+{testplan:审核检查点|includeJiraLinks=false|useFailMacro=no}
+测试用例是否覆盖全面
+方案是否用到测试范例
+测试方案是否具备可测性
+测试记录内容是否规范化
+{testplan}
+图释：
+(/) 表示该检查点已进行确认并通过审核
+(x) 表示该检查点审核未通过，需要修改
+(!) 表示该检查点未做审核确认
+{color:green}所有审核检查点都pass表示审核通过{color}
+审核检查点释义：
+测试用例是否覆盖全面：即测试用例是否包含所有需求点及测试点扩展是否全面。
+方案是否用到测试范例：涉及到大系统、任务、活动、道具等，使用测试范例可以使测试方案更为全面。
+测试方案是否具备可测性：是指该方案目的明确，思路是否清晰，能让人准确理解其测试意图，按步骤可进行测试操作。
+测试记录内容是否规范化：是指测试记录书写格式符合要求，文档清晰明了。
