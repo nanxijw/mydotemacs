@@ -1,8 +1,0 @@
-(require 'org-page)
-(require 'htmlize)
- (setq op/root-directory "E:\\Project\\org-page/example\\")
- (setq op/publish-site-url "http://nanxijw.github.com/")
- (setq op/personal-disqus-shortname "nanxijw")
- (global-set-key (kbd "<f9>") 'op/publish-pages)
- (global-set-key (kbd "C-<f9>") (lambda () (interactive)
-                                  (op/publish-pages t)))

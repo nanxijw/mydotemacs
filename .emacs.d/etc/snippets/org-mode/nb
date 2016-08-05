@@ -1,8 +1,0 @@
-# name: nb
-# key: nb
-# contributor: jiangw
-# --
-&nbsp;
-** 测试方案：$0
-** 期望结果：
-** 实际结果：{color:#0000ff}符合{color} 或 {color:#ff0000}不符合{color}。

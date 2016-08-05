@@ -1,9 +1,0 @@
-# -*- mode: snippet -*-
-# name: loop
-# key: loop
-# contributor: jiangw
-# --
-loop (${1:mks} ${1:$(if (string-match "=" text) "upto" "in")} ${2:map})
-{
-    $3
-}
