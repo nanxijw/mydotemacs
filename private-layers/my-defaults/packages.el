@@ -4,7 +4,8 @@
 ;;; Code:
 
 (defconst my-defaults-packages
-  '(highlight-symbol))
+  '(highlight-symbol
+    color-moccur))
 
 (defun my-defaults/init-highlight-symbol ()
   (use-package highlight-symbol
@@ -13,5 +14,10 @@
            ("<f3>" . highlight-symbol-next)
            ("S-<f3>" . highlight-symbol-prev)
            ("C-S-<f3>" . highlight-symbol-remove-all))))
+
+(defun my-defaults/init-color-moccur ()
+  (use-package color-moccur
+    :defer t))
+
 
 ;;; packages.el ends here
