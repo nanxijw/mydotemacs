@@ -9,7 +9,7 @@
 (defun my-defaults/init-highlight-symbol ()
   (use-package highlight-symbol
     :defer t
-    :bind (("C-<f3>" . highlight-symbol-at-point)
+    :bind (("C-<f3>" . highlight-symbol)
            ("<f3>" . highlight-symbol-next)
            ("S-<f3>" . highlight-symbol-prev)
            ("C-S-<f3>" . highlight-symbol-remove-all))))
