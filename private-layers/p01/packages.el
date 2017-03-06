@@ -36,7 +36,7 @@
         (use-package calendar
           :commands calendar-month-name)))))
 
-(defun p01/init-conf-mode ()
+(defun p01/post-init-conf-mode ()
   (use-package conf-mode
     :defer t
     :mode "\\.list$"))

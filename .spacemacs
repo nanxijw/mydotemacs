@@ -40,7 +40,7 @@ values."
      ;; ivy
      auto-completion
      emacs-lisp
-     ;; gtags
+     gtags
      (ibuffer :variables ibuffer-group-buffers-by 'projects)
      ;; python
      ;; git
@@ -53,16 +53,17 @@ values."
      ;; syntax-checking
      ;; version-control
      my-defaults
+     p01
      )
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages, then consider creating a layer. You can also put the
    ;; configuration in `dotspacemacs/user-config'.
-   dotspacemacs-additional-packages '()
+   dotspacemacs-additional-packages '(chinese-fonts-setup)
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
    ;; A list of packages that will not be installed and loaded.
-   dotspacemacs-excluded-packages '(smartparens smooth-scrolling undo-tree pangu-spacing electric-indent-mode)
+   dotspacemacs-excluded-packages '(smartparens smooth-scrolling pangu-spacing electric-indent-mode undo-tree)
    ;; Defines the behaviour of Spacemacs when installing packages.
    ;; Possible values are `used-only', `used-but-keep-unused' and `all'.
    ;; `used-only' installs only explicitly used packages and uninstall any
@@ -114,7 +115,7 @@ values."
    ;; directory. A string value must be a path to an image format supported
    ;; by your Emacs build.
    ;; If the value is nil then no banner is displayed. (default 'official)
-   dotspacemacs-startup-banner 'random
+   dotspacemacs-startup-banner 999
    ;; List of items to show in startup buffer or an association list of
    ;; the form `(list-type . list-size)`. If nil then it is disabled.
    ;; Possible values for list-type are:
@@ -144,7 +145,7 @@ values."
                                :size 13
                                :weight normal
                                :width normal
-                               :powerline-scale 1.1)
+                               :powerline-scale 1.0)
    ;; The leader key
    dotspacemacs-leader-key "SPC"
    ;; The key used for Emacs commands (M-x) (after pressing on the leader key).
@@ -159,7 +160,7 @@ values."
    ;; pressing `<leader> m`. Set it to `nil` to disable it. (default ",")
    dotspacemacs-major-mode-leader-key ","
    ;; Major mode leader key accessible in `emacs state' and `insert state'.
-   ;; (default "C-M-m)
+   ;; (default "C-M-m")
    dotspacemacs-major-mode-emacs-leader-key "C-M-m"
    ;; These variables control whether separate commands are bound in the GUI to
    ;; the key pairs C-i, TAB and C-m, RET.
@@ -225,7 +226,7 @@ values."
    ;; If non nil a progress bar is displayed when spacemacs is loading. This
    ;; may increase the boot time on some systems and emacs builds, set it to
    ;; nil to boost the loading time. (default t)
-   dotspacemacs-loading-progress-bar nil
+   dotspacemacs-loading-progress-bar t
    ;; If non nil the frame is fullscreen when Emacs starts up. (default nil)
    ;; (Emacs 24.4+ only)
    dotspacemacs-fullscreen-at-startup nil
@@ -315,18 +316,20 @@ you should place your code here."
   ;; disable auto-window-vscroll to avoid frozen by "(line-move-partial)"
   (setq auto-window-vscroll nil)
   (global-undo-tree-mode -1)
-  )
 
-;; Do not write anything past this comment. This is where Emacs will
-;; auto-generate custom variable definitions.
+  (use-package chinese-fonts-setup)
+  (chinese-fonts-setup-enable)
+  )
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(cfs--current-profile "profile1" t)
+ '(cfs--profiles-steps (quote (("profile1" . 2))) t)
  '(package-selected-packages
    (quote
-    (color-moccur anaconda-mode pythonic wgrep smex ivy-hydra ggtags counsel-projectile counsel swiper ivy ws-butler window-numbering which-key use-package spacemacs-theme spaceline persp-mode paradox open-junk-file neotree move-text macrostep indent-guide hydra hl-todo help-fns+ helm-themes helm-projectile helm-make helm-descbinds helm-c-yasnippet helm-ag google-translate expand-region exec-path-from-shell evil-unimpaired evil-surround evil-search-highlight-persist evil-mc evil-matchit evil-iedit-state iedit evil-exchange auto-yasnippet yasnippet auto-compile ace-window ace-link ace-jump-helm-line auto-complete s anzu smartparens evil dash company helm helm-core projectile avy zenburn-theme yapfify volatile-highlights vi-tilde-fringe uuidgen toc-org spinner seq restart-emacs request rainbow-delimiters quelpa pyvenv pytest pyenv-mode py-isort powerline popwin pkg-info pip-requirements pcre2el packed org-plus-contrib org-bullets lorem-ipsum live-py-mode linum-relative link-hint let-alist info+ ido-vertical-mode ibuffer-projectile hy-mode hungry-delete highlight-symbol highlight-parentheses highlight-numbers highlight-indentation helm-swoop helm-pydoc helm-mode-manager helm-flx helm-company goto-chg golden-ratio flx-ido fill-column-indicator fancy-battery eyebrowse evil-visualstar evil-visual-mark-mode evil-tutor evil-numbers evil-nerd-commenter evil-lisp-state evil-indent-plus evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu elisp-slime-nav dumb-jump diminish define-word cython-mode company-statistics company-anaconda column-enforce-mode clean-aindent-mode bracketed-paste bind-key auto-highlight-symbol async aggressive-indent adaptive-wrap ac-ispell))))
+    (chinese-fonts-setup helm-gtags which-key use-package spacemacs-theme spaceline powerline restart-emacs request persp-mode pcre2el paradox spinner org-plus-contrib open-junk-file neotree move-text macrostep link-hint info+ indent-guide hydra hungry-delete hl-todo highlight-indentation hide-comnt help-fns+ helm-projectile helm-make helm-flx helm-company helm-ag google-translate eyebrowse expand-region exec-path-from-shell evil-surround evil-nerd-commenter evil-mc evil-matchit dumb-jump company-statistics company column-enforce-mode bind-key aggressive-indent ace-window ace-link auto-complete anzu iedit smartparens bind-map highlight dash undo-tree yasnippet helm helm-core async projectile zenburn-theme yapfify ws-butler window-numbering wgrep volatile-highlights vi-tilde-fringe uuidgen toc-org solarized-theme smex rainbow-delimiters quelpa pyvenv pytest pyenv-mode py-isort popwin popup pkg-info pip-requirements org-bullets lorem-ipsum live-py-mode linum-relative let-alist ivy-hydra ido-vertical-mode ibuffer-projectile hy-mode highlight-symbol highlight-parentheses highlight-numbers helm-themes helm-swoop helm-pydoc helm-mode-manager helm-descbinds helm-c-yasnippet golden-ratio ggtags flx-ido fill-column-indicator fancy-battery evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-search-highlight-persist evil-numbers evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu elisp-slime-nav diminish define-word cython-mode counsel-projectile company-anaconda color-moccur clean-aindent-mode auto-yasnippet auto-highlight-symbol auto-compile adaptive-wrap ace-jump-helm-line ac-ispell))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
