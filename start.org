@@ -1,0 +1,178 @@
+#+TITLE: Emacs dot file
+#+PROPERTY: header-args    :tangle yes
+
+* 文件头
+  首先在文件开头声明本文件内代码使用词法作用域
+  #+begin_src emacs-lisp 
+;;; start.el -*- lexical-binding: t; -*-
+  #+end_src
+  定义一些后面要用到的变量
+  1. 定义leader-key
+     #+BEGIN_SRC emacs-lisp
+       (define-prefix-command 'my-leader-key)
+       (global-set-key (kbd "M-i") 'my-leader-key)
+     #+END_SRC
+  定义一些后面要用到的函数
+  #+begin_src emacs-lisp
+(defun version> (v1 v2) (version< v2 v1))
+(defun version>= (v1 v2) (version<= v2 v1))
+  #+end_src
+  设置custom文件地址，并载入
+  #+begin_src emacs-lisp
+(setq custom-file (locate-user-emacs-file "custom.el"))
+(when (file-exists-p custom-file)
+  (load custom-file))
+  #+end_src
+* 包管理器初始化
+  设置使用国内镜像
+  #+begin_src emacs-lisp
+  (when (version<= emacs-version "27")
+    (require 'package)
+    (setq package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
+                             ("melpa" . "https://melpa.org/packages/")))
+    (setq package-archives '(("gnu"   . "https://elpa.emacs-china.org/gnu/")
+                             ("melpa" . "https://elpa.emacs-china.org/melpa/")))
+    (setq package-archives '(("gnu"   . "https://mirrors.cloud.tencent.com/elpa/gnu/")
+                             ("melpa" . "https://mirrors.cloud.tencent.com/elpa/melpa/")))
+    (setq package-archives '(("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+                             ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+    (package-initialize))
+  #+end_src
+  先安装use-package
+  #+begin_src emacs-lisp
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+;; Should set before loading `use-package'
+(eval-and-compile
+  (setq use-package-always-ensure t)
+  (setq use-package-always-defer t)
+  (setq use-package-expand-minimally t)
+  (setq use-package-enable-imenu-support t))
+
+(eval-when-compile
+  (require 'use-package))
+
+;; Required by `use-package'
+(use-package diminish)
+(use-package bind-key)
+  #+end_src
+* UI界面
+  隐藏菜单栏、工具栏、滚动条，设置边框宽度
+  #+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  #+end_src
+  使用solarized-dark主题
+  #+begin_src emacs-lisp
+      (use-package solarized-theme 
+        :init (load-theme 'solarized-dark))
+  #+end_src
+  开启自动换行，程序标题栏显示当前标记的文件名
+  #+begin_src emacs-lisp
+    (setq-default
+     truncate-lines t
+     frame-title-format "%b    %f"
+     ) ;; end of setq-default
+  #+end_src
+  设置鼠标滚轮一次滚动3行，使得滚动不会那么跳跃
+  #+begin_src emacs-lisp
+    ;; scroll 3 line at a time (less "jumpy" than defaults)
+    (setq mouse-wheel-scroll-amount '(3 ((shift) . 1))) ;; 3 line at a time
+    (setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
+    (setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
+    ;; scroll-margin 3 靠近屏幕边沿3行时开始滚动，可以很好的看到上下文
+    (setq scroll-margin 3)
+  #+end_src
+* 个人使用习惯方面的设置
+  + 粘贴时覆盖选中的region
+  #+BEGIN_SRC emacs-lisp
+  (delete-selection-mode t)
+  #+END_SRC
+  + 使用F3查找光标当前所在位置的symbol
+  #+begin_src emacs-lisp
+    (use-package symbol-overlay
+      :defer t
+      :bind (("C-<f3>" . symbol-overlay-put)
+             ("<f3>" . symbol-overlay-jump-next)
+             ("S-<f3>" . symbol-overlay-jump-prev)
+             ("C-S-<f3>" . symbol-overlay-remove-all)))
+  #+end_src
+  高亮一个symbol后，光标在该symbol上时会自动进入symbol-mode，symbol-overlay-map中快捷键具体如下：
+  #+BEGIN_QUOTE
+  "i" -> symbol-overlay-put                ; 高亮或取消高亮当前symbol
+  "n" -> symbol-overlay-jump-next          ; 跳转到下一个位置
+  "p" -> symbol-overlay-jump-prev          ; 跳转到上一个位置
+  "w" -> symbol-overlay-save-symbol        ; 复制当前symbol
+  "t" -> symbol-overlay-toggle-in-scope    ; 切换高亮范围到作用域
+  "e" -> symbol-overlay-echo-mark          ; 撤销上一次跳转
+  "d" -> symbol-overlay-jump-to-definition ; 跳转到定义
+  "s" -> symbol-overlay-isearch-literally  ; 切换为isearch并搜索当前symbol
+  "q" -> symbol-overlay-query-replace      ; 查找替换当前symbol
+  "r" -> symbol-overlay-rename             ; 对symbol直接重命名  
+  #+END_QUOTE
+  
+* ivy设置
+  #+BEGIN_SRC emacs-lisp
+    (use-package counsel 
+      :diminish ivy-mode counsel-mode
+      :bind (("M-i f f" . counsel-find-file)
+	     ("M-i s j" . counsel-imenu)
+	     )
+      :hook ((after-init . ivy-mode))
+      )
+  #+END_SRC
+* 编程相关设置
+  使用4个空格代替tab
+  #+BEGIN_SRC emacs-lisp
+    (add-hook 'c-mode-common-hook
+	      (lambda ()
+		(setq tab-width 4 indent-tabs-mode nil);; four space instead one tab
+		(c-set-style "stroustrup")))
+  #+END_SRC
+** P01
+   由于历史原因，项目默认使用gbk编码
+   #+BEGIN_SRC 
+   (prefer-coding-system 'chinese-gbk-dos)
+   #+END_SRC
+   使用pike-mode来编辑项目脚本，因为pike-mode隶属于cc-mode包，因此这里使用cc-mode来设置
+   #+BEGIN_SRC emacs-lisp
+     (use-package cc-mode
+       :defer t
+       :mode "/server_scripts/.+\\.[ch]$"
+       :init
+       (progn
+	 (add-hook 'pike-mode-hook
+		   '(lambda ()
+		      (set (make-local-variable 'imenu-generic-expression)
+			   (list
+			    (list nil "^\\<[^()\n]*[^[:alnum:]_:<>~]\\([[:alpha:]_][[:alnum:]_:<>~]*\\)\\([     \n]\\|\\\\\n\\)*(\\([   \n]\\|\\\\\n\\)*\\([^   \n(*][^()]*\\(([^()]*)[^()]*\\)*\\)?)\\([   \n]\\|\\\\\n\\)*[^  \n;(]" 1)))
+
+		      (define-key pike-mode-map [(f2)]
+			'p01/id-text-at-point)))
+
+	 ;; ;; pike-mode don't use auto-indent when paste text
+	 ;; (add-to-list 'spacemacs-indent-sensitive-modes 'pike-mode)
+	 ;; ;; set pike-mode can use helm-gtags
+	 ;; (when (configuration-layer/layer-usedp 'gtags)
+	 ;;   (spacemacs/helm-gtags-define-keys-for-mode 'pike-mode))
+	 ;; (when (configuration-layer/package-usedp 'yasnippet)
+	 ;;   (use-package calendar
+	 ;; 	:commands calendar-month-name)))
+	 )
+       :config
+       (pike-mode 1))
+   #+END_SRC
+   使用conf-mode打开list文件
+   #+BEGIN_SRC emacs-lisp
+     (use-package conf-mode
+       :defer t
+       :mode "\\.list$")
+   #+END_SRC
+* 文件尾
+  将本文将以start模块提供
+  #+begin_src emacs-lisp
+(provide 'start)
+  #+end_src
