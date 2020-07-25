@@ -161,9 +161,17 @@
 * 搜索功能
   + 使用color-rg搜索
     #+BEGIN_SRC emacs-lisp
-      (use-package color-rg
-        :demand t
-	:load-path "site-lisp/color-rg")
+	    (use-package color-rg
+	      :demand t
+	      :load-path "site-lisp/color-rg"
+	      :init
+	      (defun my-color-rg-search-in-directory ()
+		(interactive)
+		(let ((directory (read-file-name "dir:"))
+		      (keyword (color-rg-read-input)))
+		  (color-rg-search-input keyword directory)))
+	      :bind (("M-i s f" . 'my-color-rg-search-in-directory)
+		     ("M-i /" . 'color-rg-search-project)))
     #+END_SRC
 * 编程相关设置
   使用4个空格代替tab
