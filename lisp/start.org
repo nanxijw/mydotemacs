@@ -23,10 +23,6 @@
 (when (file-exists-p custom-file)
   (load custom-file))
   #+end_src
-
-  #+BEGIN_SRC emacs-lisp
-
-  #+END_SRC
 * 包管理器初始化
   设置使用国内镜像
   #+begin_src emacs-lisp
@@ -36,10 +32,10 @@
                              ("melpa" . "https://melpa.org/packages/")))
     (setq package-archives '(("gnu"   . "https://elpa.emacs-china.org/gnu/")
                              ("melpa" . "https://elpa.emacs-china.org/melpa/")))
-    (setq package-archives '(("gnu"   . "https://mirrors.cloud.tencent.com/elpa/gnu/")
-                             ("melpa" . "https://mirrors.cloud.tencent.com/elpa/melpa/")))
     (setq package-archives '(("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
                              ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+    (setq package-archives '(("gnu"   . "https://mirrors.cloud.tencent.com/elpa/gnu/")
+                             ("melpa" . "https://mirrors.cloud.tencent.com/elpa/melpa/")))
     (package-initialize))
   #+end_src
   先安装use-package
@@ -127,51 +123,131 @@
              ("C-S-<f3>" . symbol-overlay-remove-all)))
     #+end_src
     高亮一个symbol后，光标在该symbol上时会自动进入symbol-mode，symbol-overlay-map中快捷键具体如下：
-    #+BEGIN_QUOTE
-    "i" -> symbol-overlay-put                ; 高亮或取消高亮当前symbol
-    "n" -> symbol-overlay-jump-next          ; 跳转到下一个位置
-    "p" -> symbol-overlay-jump-prev          ; 跳转到上一个位置
-    "w" -> symbol-overlay-save-symbol        ; 复制当前symbol
-    "t" -> symbol-overlay-toggle-in-scope    ; 切换高亮范围到作用域
-    "e" -> symbol-overlay-echo-mark          ; 撤销上一次跳转
-    "d" -> symbol-overlay-jump-to-definition ; 跳转到定义
-    "s" -> symbol-overlay-isearch-literally  ; 切换为isearch并搜索当前symbol
-    "q" -> symbol-overlay-query-replace      ; 查找替换当前symbol
-    "r" -> symbol-overlay-rename             ; 对symbol直接重命名  
-    #+END_QUOTE
-
-* ivy设置
+    | i | symbol-overlay-put                | 高亮或取消高亮当前symbol      |
+    | n | symbol-overlay-jump-next          | 跳转到下一个位置              |
+    | p | symbol-overlay-jump-prev          | 跳转到上一个位置              |
+    | w | symbol-overlay-save-symbol        | 复制当前symbol                |
+    | t | symbol-overlay-toggle-in-scope    | 切换高亮范围到作用域          |
+    | e | symbol-overlay-echo-mark          | 撤销上一次跳转                |
+    | d | symbol-overlay-jump-to-definition | 跳转到定义                    |
+    | s | symbol-overlay-isearch-literally  | 切换为isearch并搜索当前symbol |
+    | q | symbol-overlay-query-replace      | 查找替换当前symbol            |
+    | r | symbol-overlay-rename             | 对symbol直接重命名            |
+  + 在window间移动
+    #+BEGIN_SRC emacs-lisp
+      (when (eq 'windows-nt system-type)
+	(setq w32-lwindow-modifier 'super) ;; 设置win键为super键
+	(setq w32-rwindow-modifier 'super) ;; 设置win键为super键
+	(global-set-key (kbd "M-s-<left>") 'windmove-left)
+	(global-set-key (kbd "M-s-<right>") 'windmove-right)
+	(global-set-key (kbd "M-s-<up>") 'windmove-up)
+	(global-set-key (kbd "M-s-<down>") 'windmove-down))
+    #+END_SRC
+* projectile
   #+BEGIN_SRC emacs-lisp
-    ;; (use-package ivy
-    ;;   :ensure t
-    ;;   :diminish ivy-mode
-    ;;   :hook (after-init . ivy-mode))
+    (use-package projectile)
+  #+END_SRC
+* helm
+  #+BEGIN_SRC emacs-lisp
+	(use-package helm
+	  :config (require 'helm-config)
+	  :bind (
+		 ("M-x" . helm-M-x)
+		 ("C-x C-f" . helm-find-files)
+		 ("M-i b b" . helm-mini)
+		 ("M-i f r" . helm-recentf)
+		 ("M-i s j" . helm-imenu)
+		 ("M-i s l" . helm-resume))
+	  :hook ((after-init . helm-mode)))
 
-    (use-package counsel
-      :diminish counsel-mode
-      :bind (("M-i f f" . find-file)
-	     ("M-i s j" . counsel-imenu)
-	     ("M-i s /" . counsel-rg)
-	     )
-      :hook ((after-init . ivy-mode)
-	     (ivy-mode . counsel-mode))
-      )
+	(use-package helm-ag
+	  :config
+	  (custom-set-variables '(helm-ag-base-command "rg --no-heading -Egbk")
+				`(helm-ag-success-exit-status '(0 2)))
+	  :bind (("M-i s f" . helm-do-ag)))
+
+	(use-package helm-gtags
+	  :bind (("M-i m g d" . helm-gtags-find-tag)
+		 ("M-i m g r" . helm-gtags-find-rtag)
+		 ("M-i m g R" . helm-gtags-resume)))
+
   #+END_SRC
 
+* 自动补全
+  #+BEGIN_SRC emacs-lisp
+    (use-package company
+      :hook (after-init . global-company-mode)
+      :config
+      (setq company-tooltip-align-annotations t
+	    company-tooltip-limit 12
+	    company-idle-delay 0.6
+	    company-echo-delay (if (display-graphic-p) nil 0)
+	    company-minimum-prefix-length 4
+	    company-require-match nil
+	    company-dabbrev-ignore-case nil
+	    company-dabbrev-downcase nil))
+  #+END_SRC
+* 文件备份
+  #+BEGIN_SRC emacs-lisp
+    (setq auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "tmp/autosaves\\1") t)))
+    (setq auto-save-list-file-name (locate-user-emacs-file "tmp/autosave-list"))
+
+    (setq backup-by-copying t) ;; 使用复件备份方式
+    (setq backup-directory-alist `((".*" . ,(locate-user-emacs-file "tmp/backups")))) ;; 设置备份路径
+
+    ;; 设置一下备份时的版本控制，这样更加安全。
+    (setq version-control     t ;; 启用版本控制，即可以备份多次
+	  kept-new-versions   6 ;; 保留最新的6个版本
+	  kept-old-versions   2 ;; 备份最原始的两个版本，即第一次编辑前的文档，和第二次编辑前的文档
+	  delete-old-versions t ;; 删除中间版本
+	  )
+    #+END_SRC
 * 搜索功能
   + 使用color-rg搜索
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
 	    (use-package color-rg
 	      :demand t
 	      :load-path "site-lisp/color-rg"
 	      :init
 	      (defun my-color-rg-search-in-directory ()
 		(interactive)
-		(let ((directory (read-file-name "dir:"))
+		(let ((directory (read-directory-name "In Directory:"))
 		      (keyword (color-rg-read-input)))
 		  (color-rg-search-input keyword directory)))
 	      :bind (("M-i s f" . 'my-color-rg-search-in-directory)
 		     ("M-i /" . 'color-rg-search-project)))
+    #+END_SRC
+  + snails
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (use-package snails
+	:demand t
+	:load-path "site-lisp/snails"
+	:init
+	(setq snails-prefix-backends
+	      '((">" '(snails-backend-command))
+		("@" '(snails-backend-imenu))
+		("#" '(snails-backend-current-buffer))
+		("!" '(snails-backend-rg))
+		("?" '(snails-backend-everything))))
+
+	(setq snails-default-backends
+	  '(snails-backend-buffer snails-backend-recentf snails-backend-directory-files))
+  
+	:bind (("M-i s s" . 'snails)
+	       ("M-i f f" . (lambda ()
+			      (interactive)
+			      (snails '(snails-backend-directory-files))
+			      (with-current-buffer snails-input-buffer
+				(insert (file-name-as-directory (snails-start-buffer-dir))))))
+	       ("M-i s j" . (lambda ()
+			      (interactive)
+			      (snails '(snails-backend-imenu))))
+	       ("M-i b b" . (lambda ()
+			      (interactive)
+			      (snails '(snails-backend-buffer snails-backend-recentf))))
+	       :map snails-mode-map
+	       ("<down>" . snails-select-next-item)
+	       ("<up>" . snails-select-prev-item)))
     #+END_SRC
 * 编程相关设置
   使用4个空格代替tab
@@ -188,31 +264,15 @@
    #+END_SRC
    使用pike-mode来编辑项目脚本，因为pike-mode隶属于cc-mode包，因此这里使用cc-mode来设置
    #+BEGIN_SRC emacs-lisp
-     (use-package cc-mode
-       :defer t
-       :mode "/server_scripts/.+\\.[ch]$"
-       :init
-       (progn
-	 (add-hook 'pike-mode-hook
-		   '(lambda ()
-		      (set (make-local-variable 'imenu-generic-expression)
-			   (list
-			    (list nil "^\\<[^()\n]*[^[:alnum:]_:<>~]\\([[:alpha:]_][[:alnum:]_:<>~]*\\)\\([     \n]\\|\\\\\n\\)*(\\([   \n]\\|\\\\\n\\)*\\([^   \n(*][^()]*\\(([^()]*)[^()]*\\)*\\)?)\\([   \n]\\|\\\\\n\\)*[^  \n;(]" 1)))
+     (setq auto-mode-alist (append (list (cons "/server_scripts/.+\\.[ch]$" 'pike-mode)) auto-mode-alist))
+     (add-hook 'pike-mode-hook
+	       '(lambda ()
+		  (set (make-local-variable 'imenu-generic-expression)
+		       (list
+			(list nil "^\\<[^()\n]*[^[:alnum:]_:<>~]\\([[:alpha:]_][[:alnum:]_:<>~]*\\)\\([     \n]\\|\\\\\n\\)*(\\([   \n]\\|\\\\\n\\)*\\([^   \n(*][^()]*\\(([^()]*)[^()]*\\)*\\)?)\\([   \n]\\|\\\\\n\\)*[^  \n;(]" 1)))
 
-		      (define-key pike-mode-map [(f2)]
-			'p01/id-text-at-point)))
-
-	 ;; ;; pike-mode don't use auto-indent when paste text
-	 ;; (add-to-list 'spacemacs-indent-sensitive-modes 'pike-mode)
-	 ;; ;; set pike-mode can use helm-gtags
-	 ;; (when (configuration-layer/layer-usedp 'gtags)
-	 ;;   (spacemacs/helm-gtags-define-keys-for-mode 'pike-mode))
-	 ;; (when (configuration-layer/package-usedp 'yasnippet)
-	 ;;   (use-package calendar
-	 ;; 	:commands calendar-month-name)))
-	 )
-       :config
-       (pike-mode 1))
+		  (define-key pike-mode-map [(f2)]
+		    'p01/id-text-at-point)))
    #+END_SRC
    使用conf-mode打开list文件
    #+BEGIN_SRC emacs-lisp
@@ -220,6 +280,22 @@
        :defer t
        :mode "\\.list$")
    #+END_SRC
+* 临时实验配置
+  #+BEGIN_SRC emacs-lisp :tangle no
+    (use-package org-roam
+	:ensure t
+	:hook
+	(after-init . org-roam-mode)
+	:custom
+	(org-roam-directory "~/GTD/notes/")
+	:bind (:map org-roam-mode-map
+		(("C-c n l" . org-roam)
+		 ("C-c n f" . org-roam-find-file)
+		 ("C-c n g" . org-roam-graph-show))
+		:map org-mode-map
+		(("C-c n i" . org-roam-insert))
+		(("C-c n I" . org-roam-insert-immediate))))
+  #+END_SRC
 * 文件尾
   将本文将以start模块提供
   #+begin_src emacs-lisp
