@@ -1,2 +1,5 @@
 elpa/
 tmp/
+lisp/
+server/
+start.el
