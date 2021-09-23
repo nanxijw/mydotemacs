@@ -2,4 +2,6 @@ elpa/
 tmp/
 lisp/
 server/
+cnfonts/
+etc/snippets/
 start.el
