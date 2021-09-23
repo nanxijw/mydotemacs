@@ -1,21 +1,16 @@
 #+TITLE: Emacs dot file
 #+PROPERTY: header-args    :tangle yes
-
 * 文件头
   - 首先在文件开头声明本文件内代码使用词法作用域
     #+begin_src emacs-lisp
       ;;; start.el -*- lexical-binding: t; -*-
     #+end_src
   - 以服务器模式启动
-    #+begin_src emacs-lisp
-    (server-start)
+    #+begin_src emacs-lisp :tangle no
+      (server-start)
     #+end_src
   - 定义一些后面要用到的变量
-    1. 定义leader-key
-       #+BEGIN_SRC emacs-lisp
-         (define-prefix-command 'my-leader-key)
-         (global-set-key (kbd "M-i") 'my-leader-key)
-       #+END_SRC
+    无
   - 定义一些后面要用到的函数
     #+begin_src emacs-lisp
       (defun version> (v1 v2) (version< v2 v1))
@@ -28,31 +23,44 @@
         (load custom-file))
     #+end_src
   - 可执行文件路径
-    #+begin_src emacs-lisp
-      ;; (setq exec-path (add-to-list 'exec-path "C:/link"))
+    #+begin_src emacs-lisp :tangle no
+      (add-to-list 'exec-path "C:/link")
     #+end_src
   - 解决一些命令行工具乱码问题
     #+begin_src emacs-lisp
       (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
     #+end_src
-* 包管理器初始化
+* 包管理器
   - 设置使用国内镜像
     #+BEGIN_SRC emacs-lisp
-      ;; (when (version<= emacs-version "27")
-      (require 'package)
-      (setq package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
-                               ("melpa" . "https://melpa.org/packages/")))
-      (setq package-archives '(("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                               ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
-      (setq package-archives '(("gnu"   . "https://mirrors.cloud.tencent.com/elpa/gnu/")
-                               ("melpa" . "https://mirrors.cloud.tencent.com/elpa/melpa/")))
-      (setq package-archives '(("gnu"   . "https://elpa.emacs-china.org/gnu/")
-                               ("melpa" . "https://elpa.emacs-china.org/melpa/")))
-      (package-initialize)
-      ;; )
+      ;; MelpaPackages
+      ;; Select the folder to store packages
+      ;; Comment / Uncomment to use desired sites
+      (setq package-user-dir (expand-file-name "elpa" user-emacs-directory)
+            package-archives
+            '(("gnu"   . "https://elpa.gnu.org/packages/")
+              ("melpa" . "https://melpa.org/packages/")
+              ("cselpa" . "https://elpa.thecybershadow.net/packages/")
+              ;; ("melpa-cn" . "http://mirrors.cloud.tencent.com/elpa/melpa/")
+              ;; ("gnu-cn"   . "http://mirrors.cloud.tencent.com/elpa/gnu/")
+              ))
+      ;; -MelpaPackages
+
+      ;; ConfigurePackageManager
+      (unless (bound-and-true-p package--initialized)
+        (setq package-enable-at-startup nil)          ; To prevent initializing twice
+        (package-initialize))
     #+END_SRC
   - 先安装use-package
     #+BEGIN_SRC emacs-lisp
+      ;; set use-package-verbose to t for interpreted .emacs,
+      ;; and to nil for byte-compiled .emacs.elc.
+      (eval-and-compile
+        (setq use-package-verbose (not (bound-and-true-p byte-compile-current-file))))
+      ;; -ConfigurePackageManager
+
+      ;; ConfigureUsePackage
+      ;; Install use-package if not installed
       (unless (package-installed-p 'use-package)
         (package-refresh-contents)
         (package-install 'use-package))
@@ -62,52 +70,73 @@
         (setq use-package-always-ensure t)
         (setq use-package-always-defer t)
         (setq use-package-expand-minimally t)
+        ;; (setq use-package-compute-statistics t)
         (setq use-package-enable-imenu-support t))
 
       (eval-when-compile
-        (require 'use-package))
-
-      ;; Required by `use-package'
-      (use-package diminish)
-      (use-package bind-key)
+        (require 'use-package)
+        (require 'bind-key))
+      ;; -ConfigureUsePackage
     #+END_SRC
+  - 自动升级包
+    Auto package update automatically updates installed packages if at least auto-package-update-interval days have passed since the last update.
+    #+begin_src emacs-lisp :tangle no
+      ;; AutoPackageUpdate
+      (use-package auto-package-update
+        :if (not (daemonp))
+        :custom
+        (auto-package-update-interval 7) ;; in days
+        (auto-package-update-prompt-before-update t)
+        (auto-package-update-delete-old-versions t)
+        (auto-package-update-hide-results t)
+        :config
+        (auto-package-update-maybe))
+      ;; -AutoPackageUpdate
+
+    #+end_src
 * UI界面
   - 隐藏菜单栏、工具栏、滚动条，设置边框宽度
-    #+BEGIN_SRC emacs-lisp
+    放到eraly-init.el中去了，这屏蔽
+    #+BEGIN_SRC emacs-lisp :tangle no
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1)
     #+END_SRC
-  - 使用solarized-dark主题
+  - 主题设置
     #+BEGIN_SRC emacs-lisp
       ;; (use-package solarized-theme
       ;;   :init (load-theme 'solarized-dark))
 
-      ;; (use-package srcery-theme
-      ;;   :init (load-theme 'srcery))
+      (use-package srcery-theme
+        :init (load-theme 'srcery))
 
       ;; (use-package fantom-theme
       ;;   :init (load-theme 'fantom))
 
-      (use-package dracula-theme
-        :init (load-theme 'dracula))
+      ;; (use-package dracula-theme
+      ;;   :init (load-theme 'dracula))
     #+END_SRC
   - 开启自动换行，程序标题栏显示当前标记的文件名
     #+BEGIN_SRC emacs-lisp
       (setq-default
        truncate-lines t
-       frame-title-format "%b    %f"
+       frame-title-format "%b    %Z    %f"
        ) ;; end of setq-default
     #+END_SRC
-  - 在modeline里显示行号、列号以及当前文件的总字符数
-    #+BEGIN_SRC emacs-lisp
-      (use-package simple
-        :ensure nil
-        :hook (after-init . (lambda ()
-                              (line-number-mode)
-                              (column-number-mode)
-                              (size-indication-mode))))
-    #+END_SRC
+  - modeline设置
+    + 显示行号、列号以及当前文件的总字符数
+      #+BEGIN_SRC emacs-lisp
+        (add-to-list 'after-init-hook 'line-number-mode)
+        (add-to-list 'after-init-hook 'column-number-mode)
+        (add-to-list 'after-init-hook 'size-indication-mode)
+      #+END_SRC
+    + Diminish
+      Diminish, a feature that removes certain minor modes from mode-line.
+      #+begin_src emacs-lisp
+        (use-package diminish
+          :config
+          (diminish 'eldoc-mode "El"))
+      #+end_src
   - 高亮当前行
     #+BEGIN_SRC emacs-lisp
       (use-package hl-line
@@ -184,29 +213,49 @@
       (setq scroll-margin 3)
     #+END_SRC
   - 字体设置
-    #+BEGIN_SRC emacs-lisp :tangle no
+    #+BEGIN_SRC emacs-lisp :tangle yes
+      ;; (defun set-font (english chinese english-size chinese-size)
+      ;;   "set chinese, english font and size"
+      ;;   (set-face-attribute 'default nil :font
+      ;;                       (format "%s:pixelsize=%d"  english english-size))
+      ;;   (dolist (charset '(kana han symbol cjk-misc bopomofo))
+      ;;     (set-fontset-font (frame-parameter nil 'font) charset
+      ;;                       (font-spec :family chinese :size chinese-size))))
+
+      ;; (add-to-list 'after-make-frame-functions
+      ;;              (lambda (new-frame)
+      ;;                (select-frame new-frame)
+      ;;                (when (display-graphic-p)
+      ;;                    (set-font "JetBrains Mono" "Microsoft YaHei" 15 18))))
+
+      ;; (when (display-graphic-p)
+      ;;     (set-font "JetBrains Mono" "Microsoft YaHei" 15 18))
+
+
+      ;; Auto generated by cnfonts
+      ;; <https://github.com/tumashu/cnfonts>
       (set-face-attribute
        'default nil
-       :font (font-spec :name "-outline-Consolas-bold-normal-normal-mono-*-*-*-*-c-*-iso10646-1"
+       :font (font-spec :name "Cascadia Code"
                         :weight 'normal
                         :slant 'normal
-                        :size 12.5))
+                        :size 12.0))
       (dolist (charset '(kana han symbol cjk-misc bopomofo))
         (set-fontset-font
          (frame-parameter nil 'font)
          charset
-         (font-spec :name "-outline-微软雅黑-normal-normal-normal-sans-*-*-*-*-p-*-iso10646-1"
+         (font-spec :name "微软雅黑"
                     :weight 'normal
                     :slant 'normal
                     :size 13.5)))
-
     #+END_SRC
 * 个人使用习惯方面的设置
   - 粘贴时覆盖选中的region
     #+BEGIN_SRC emacs-lisp
       (delete-selection-mode t)
     #+END_SRC
-  - 编辑文件时emacs会自动创建一个 ==.#== 的文件，在windows系统下会导致一些奇怪的问题，这里设置为不创建这个文件
+  - 不锁定文件
+    编辑文件时emacs会自动创建一个 ==.#== 的文件，在windows系统下会导致一些奇怪的问题，这里设置为不创建这个文件
     #+BEGIN_SRC emacs-lisp
       (setq create-lockfiles nil)
     #+END_SRC
@@ -243,7 +292,7 @@
     | q | symbol-overlay-query-replace      | 查找替换当前symbol            |
     | r | symbol-overlay-rename             | 对symbol直接重命名            |
   - 在window间移动
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (when (eq 'windows-nt system-type)
         (setq w32-lwindow-modifier 'super) ;; 设置win键为super键
         (setq w32-rwindow-modifier 'super) ;; 设置win键为super键
@@ -254,10 +303,16 @@
     #+END_SRC
   - kill-ring时，若没有选中region，则复制当前行
     #+BEGIN_SRC emacs-lisp
-      (define-advice kill-ring-save (:around (func &rest args))
-        (if mark-active (apply func args)
-          (message "Copied line")
-          (apply func (list (line-beginning-position) (line-end-position)))))
+      (defun my-kill-ring-save (beg end &optional region)
+        (interactive (list (mark) (point)
+                           (prefix-numeric-value current-prefix-arg)))
+        (if (region-active-p)
+            (kill-ring-save beg end region)
+          (progn
+            (message "Copied line")
+            (kill-ring-save (line-beginning-position) (line-end-position)))))
+
+      (global-set-key [remap kill-ring-save] 'my-kill-ring-save)
     #+END_SRC
   - 记录上次关闭前，光标在文件中的位置
     #+BEGIN_SRC emacs-lisp
@@ -267,13 +322,14 @@
         (setq save-place-file (locate-user-emacs-file "tmp/places"))
         :hook (after-init . save-place-mode))
     #+END_SRC
-  - 自动读取外部文件对本文件的修改
+  - 自动读取外部文件对正在编辑的文件的修改
     #+BEGIN_SRC emacs-lisp
       (use-package autorevert
         :ensure nil
         :hook (after-init . global-auto-revert-mode))
     #+END_SRC
-  - 有时候会打开一些文件，这些文件里的某一行特别长，而Emacs没有针对这种情况做特殊 处理，会导致整个界面卡死。这里启用so-long，当打开一个具有长行的文件时，它会自动检测并将一些可能导致严重性能的mode关闭， 如font-lock (syntax highlight)。
+  - 单行内容过长时关闭一些mode
+    有时候会打开一些文件，这些文件里的某一行特别长，而Emacs没有针对这种情况做特殊 处理，会导致整个界面卡死。这里启用so-long，当打开一个具有长行的文件时，它会自动检测并将一些可能导致严重性能的mode关闭， 如font-lock (syntax highlight)。
     #+BEGIN_SRC emacs-lisp
       (use-package so-long
         :ensure nil
@@ -286,21 +342,26 @@
   #+END_SRC
 * 自动补全
   - company
+    Company, a text completion framework for Emacs.
+    The function smarter-tab-to-complete is to smartly resolve TAB conflicts in company and yasnippet packages.
     #+BEGIN_SRC emacs-lisp
       (use-package company
+        :diminish (company-mode . "[C]")
         :hook (after-init . global-company-mode)
         :config
         (setq company-tooltip-align-annotations t
               company-tooltip-limit 12
-              company-idle-delay 0.1
+              company-show-numbers t
+              company-idle-delay 0
               company-echo-delay (if (display-graphic-p) nil 0)
-              company-minimum-prefix-length 2
+              company-minimum-prefix-length 4
               company-require-match nil
               company-dabbrev-ignore-case nil
               company-dabbrev-downcase nil
-              company-dabbrev-code-ignore-case t)
+              company-dabbrev-code-ignore-case t
+              company-global-modes '(not shell-mode text-mode))
 
-        (setq company-backends '((company-keywords company-dabbrev-code)))
+        (setq company-backends '(company-elisp (company-keywords company-dabbrev-code)))
 
         :bind
         (:map company-active-map
@@ -308,13 +369,31 @@
               ("C-n" . company-select-next)
               ("C-p" . company-select-previous)))
     #+END_SRC
-  - yasnippet
+  - YASnippet
+    YASnippet, a programming template system for Emacs. It loads YASnippet Snippets, a collection of yasnippet snippets for many languages.
     #+BEGIN_SRC emacs-lisp
       (use-package yasnippet
-        :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
+        :diminish (yas-minor-mode . "Yas")
         :init
+        ;; (use-package yasnippet-snippets :after yasnippet)
         (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
-        :hook (after-init . (lambda () (yas-global-mode 1))))
+        :hook ((prog-mode LaTeX-mode org-mode) . yas-minor-mode)
+        :bind
+        (:map yas-minor-mode-map ("C-c C-n" . yas-expand-from-trigger-key))
+        (:map yas-keymap
+              (("TAB" . smarter-yas-expand-next-field)
+               ([(tab)] . smarter-yas-expand-next-field)))
+        :config
+        (yas-reload-all)
+        (defun smarter-yas-expand-next-field ()
+          "Try to `yas-expand' then `yas-next-field' at current cursor position."
+          (interactive)
+          (let ((old-point (point))
+                (old-tick (buffer-chars-modified-tick)))
+            (yas-expand)
+            (when (and (eq old-point (point))
+                       (eq old-tick (buffer-chars-modified-tick)))
+              (ignore-errors (yas-next-field))))))
     #+END_SRC
 * 文件备份
   #+BEGIN_SRC emacs-lisp
@@ -326,19 +405,19 @@
 
     ;; 设置一下备份时的版本控制，这样更加安全。
     (setq version-control     t ;; 启用版本控制，即可以备份多次
-      kept-new-versions   6 ;; 保留最新的6个版本
-      kept-old-versions   2 ;; 备份最原始的两个版本，即第一次编辑前的文档，和第二次编辑前的文档
-      delete-old-versions t ;; 删除中间版本
-      )
+          kept-new-versions   6 ;; 保留最新的6个版本
+          kept-old-versions   2 ;; 备份最原始的两个版本，即第一次编辑前的文档，和第二次编辑前的文档
+          delete-old-versions t ;; 删除中间版本
+          )
 
     ;; 最近访问文件列表
     (setq recentf-max-saved-items 100)
     (setq recentf-save-file (locate-user-emacs-file "tmp/recentf"))
-    (recentf-mode +1)
+    (add-to-list 'after-init-hook 'recentf-mode)
     #+END_SRC
 * 搜索功能
   - 使用color-rg搜索
-    #+BEGIN_SRC emacs-lisp :tangle yes
+    #+BEGIN_SRC emacs-lisp
       (use-package color-rg
         :demand t
         :load-path "lisp/color-rg"
@@ -351,15 +430,18 @@
           (let ((directory (read-directory-name "In Directory:"))
                 (keyword (color-rg-read-input)))
             (color-rg-search-input keyword (expand-file-name directory))))
-        :bind (("M-i s f" . 'my-color-rg-search-in-directory)
-               ("M-i /" . 'color-rg-search-project)))
+        :bind (("C-c s f" . 'my-color-rg-search-in-directory)
+               ("C-c /" . 'color-rg-search-project)))
     #+END_SRC
   - selectrum
     #+BEGIN_SRC emacs-lisp
       (use-package selectrum
         :init
-        (selectrum-mode +1)
-        (setq completion-styles '(substring partial-completion)))
+        (selectrum-mode +1))
+
+      (use-package orderless
+        :ensure t
+        :custom (completion-styles '(orderless)))
     #+END_SRC
   - consult
     #+BEGIN_SRC emacs-lisp
@@ -383,9 +465,9 @@
 
         :bind (("C-x b" . consult-buffer)
                ("C-c C-s" . consult-line)
-               ("M-i s j" . consult-imenu)
-               ("M-i f r" . consult-recent-file)
-               ("M-i f d" . consult-find-fd)))
+               ("C-c s j" . consult-imenu)
+               ("C-c f r" . consult-recent-file)
+               ("C-c f d" . consult-find-fd)))
     #+END_SRC
 
 * 编程相关设置
@@ -425,7 +507,7 @@
          :mode "\\.list$")
      #+END_SRC
 ** rust
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (use-package rust-mode
        :hook ((rust-mode . my/rust-lsp))
        :config
@@ -434,24 +516,77 @@
          (setq-local lsp-completion-enable nil
                      compile-command "cargo build")))
    #+END_SRC
+* 临时实验配置
+  - thing-edit
+    #+begin_src emacs-lisp :tangle no
+      (use-package thing-edit
+        :demand t
+        :load-path "lisp/thing-edit"
+        :config
+        (custom-set-faces '(thing-edit-font-lock-flash ((t (:inherit match))))))
+
+      (use-package string-at-point
+        :demand t
+        :load-path "lisp"
+        :config
+        (defun thing-copy-string (kill-conditional)
+        "Copy string at current point.
+      With the universal argument, the text will also be killed."
+          (interactive "P")
+          (thing-edit 'string kill-conditional)))
+
+      (use-package hydra)
+
+      (defhydra my-kill-ring-save (:color 'pink)
+        "my kill ring save"
+        ("s" thing-copy-symbol)
+        ("x" thing-copy-sexp)
+        ("l" thing-copy-list)
+        ("\"" thing-copy-string))
+
+      (defun my-kill-ring-save (beg end &optional region)
+        (interactive (list (mark) (point)
+                           (prefix-numeric-value current-prefix-arg)))
+        (if (region-active-p)
+            (kill-ring-save beg end region)
+          (my-kill-ring-save/body)))
+
+      (global-set-key [remap kill-ring-save] 'my-kill-ring-save)
+
+    #+end_src
+* 快捷键设置
+  - 取消一些我不用的快捷键
+    #+begin_src emacs-lisp
+      (global-set-key (kbd "C-z") nil)
+    #+end_src
+  - one-key
+    #+begin_src emacs-lisp :tangle no
+      (add-to-list 'load-path (locate-user-emacs-file "lisp/one-key"))
+      (require 'one-key)
+
+      (setq one-key-popup-window nil)
+
+      (one-key-create-menu
+       "THING-EDIT"
+       '(
+         (("s" . "Symbol") . thing-copy-symbol)
+         )
+       t
+       nil
+       'thing-copy-line
+       nil
+       nil)
+
+      (defun my-kill-ring-save (beg end &optional region)
+              (interactive (list (mark) (point)
+                                 (prefix-numeric-value current-prefix-arg)))
+              (if (region-active-p)
+                  (kill-ring-save beg end region)
+                (one-key-menu-thing-edit)))
+    #+end_src
 * 性能优化
   - 设置垃圾回收出发阈值为128M，并且空闲超过15秒时进行垃圾回收
     #+begin_src emacs-lisp
       (setq gc-cons-threshold 134217728)
       (defvar k-gc-timer (run-with-idle-timer 15 t 'garbage-collect))
-    #+end_src
-* 临时实验配置
-  - multiple-cursors
-    #+BEGIN_SRC emacs-lisp
-      (use-package multiple-cursors
-        :bind
-        (("C->" . mc/mark-next-like-this)
-         ("C-<" . mc/mark-previous-like-this)
-         ("C-S-c C-S-c". mc/edit-lines)))
-    #+END_SRC
-  - expand-region
-    #+begin_src emacs-lisp :tangle no
-      (use-package expand-region
-        :bind
-        (([M-S-right] 'er/expand-region)))
     #+end_src
