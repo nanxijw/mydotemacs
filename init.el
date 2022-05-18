@@ -8,4 +8,9 @@
 ;; Optimize: Force "lisp"" and "site-lisp" at the head to reduce the startup time.
 ;(push (expand-file-name "lisp" user-emacs-directory) load-path)
 
-(load-file (locate-user-emacs-file "start.el"))
+;; Every file opened and loaded by Emacs will run through this list to
+;; check for a proper handler for the file, but during startup, it
+;; won’t need any of them.
+(let ((file-name-handler-alist nil))
+  ;; load configs
+  (load-file (locate-user-emacs-file "start.el")))

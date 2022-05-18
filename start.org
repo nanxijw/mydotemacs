@@ -12,7 +12,7 @@
   - 定义一些后面要用到的变量
     无
   - 定义一些后面要用到的函数
-    #+begin_src emacs-lisp
+    #+begin_src emacs-lisp :tangle no
       (defun version> (v1 v2) (version< v2 v1))
       (defun version>= (v1 v2) (version<= v2 v1))
     #+end_src
@@ -38,9 +38,12 @@
       ;; Comment / Uncomment to use desired sites
       (setq package-user-dir (expand-file-name "elpa" user-emacs-directory)
             package-archives
-            '(("gnu"   . "https://elpa.gnu.org/packages/")
-              ("melpa" . "https://melpa.org/packages/")
-              ("cselpa" . "https://elpa.thecybershadow.net/packages/")
+            '(
+              ;; ("gnu"   . "https://elpa.gnu.org/packages/")
+              ;; ("melpa" . "https://melpa.org/packages/")
+              ;; ("cselpa" . "https://elpa.thecybershadow.net/packages/")
+              ("gnu-tuna"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+              ("melpa-tuna" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
               ;; ("melpa-cn" . "http://mirrors.cloud.tencent.com/elpa/melpa/")
               ;; ("gnu-cn"   . "http://mirrors.cloud.tencent.com/elpa/gnu/")
               ))
@@ -51,48 +54,50 @@
         (setq package-enable-at-startup nil)          ; To prevent initializing twice
         (package-initialize))
     #+END_SRC
-  - 先安装use-package
-    #+BEGIN_SRC emacs-lisp
-      ;; set use-package-verbose to t for interpreted .emacs,
-      ;; and to nil for byte-compiled .emacs.elc.
+  - setup.el设置
+    #+begin_src emacs-lisp
       (eval-and-compile
-        (setq use-package-verbose (not (bound-and-true-p byte-compile-current-file))))
-      ;; -ConfigurePackageManager
+        (unless (require 'setup nil t)
+          (package-install 'setup)
+          (require 'setup))
 
-      ;; ConfigureUsePackage
-      ;; Install use-package if not installed
-      (unless (package-installed-p 'use-package)
-        (package-refresh-contents)
-        (package-install 'use-package))
+        (defmacro setc (&rest args)
+          "Customize user options using ARGS like `setq'."
+          (declare (debug setq))
+          `(setup (:option ,@args)))
 
-      ;; Should set before loading `use-package'
-      (eval-and-compile
-        (setq use-package-always-ensure t)
-        (setq use-package-always-defer t)
-        (setq use-package-expand-minimally t)
-        ;; (setq use-package-compute-statistics t)
-        (setq use-package-enable-imenu-support t))
+        (setup-define :autoload
+          (lambda (func)
+            (let ((fn (if (memq (car-safe func) '(quote function))
+                          (cadr func)
+                        func)))
+              `(unless (fboundp (quote ,fn))
+                 (autoload (function ,fn) ,(symbol-name (setup-get 'feature)) nil t))))
+          :documentation "Autoload COMMAND if not already bound."
+          :repeatable t
+          :signature '(FUNC ...))
 
-      (eval-when-compile
-        (require 'use-package)
-        (require 'bind-key))
-      ;; -ConfigureUsePackage
-    #+END_SRC
-  - 自动升级包
-    Auto package update automatically updates installed packages if at least auto-package-update-interval days have passed since the last update.
-    #+begin_src emacs-lisp :tangle no
-      ;; AutoPackageUpdate
-      (use-package auto-package-update
-        :if (not (daemonp))
-        :custom
-        (auto-package-update-interval 7) ;; in days
-        (auto-package-update-prompt-before-update t)
-        (auto-package-update-delete-old-versions t)
-        (auto-package-update-hide-results t)
-        :config
-        (auto-package-update-maybe))
-      ;; -AutoPackageUpdate
+        (setup-define :needs
+          (lambda (executable)
+            `(unless (executable-find ,executable)
+               ,(setup-quit)))
+          :documentation "If EXECUTABLE is not in the path, stop here."
+          :repeatable 1)
 
+        (setup-define :load-from
+          (lambda (path)
+            `(let ((path* (expand-file-name (locate-user-emacs-file ,path))))
+               (if (file-exists-p path*)
+                   (add-to-list 'load-path path*)
+                 ,(setup-quit))))
+          :documentation "Add PATH to load path.
+        This macro can be used as NAME, and it will replace itself with
+        the nondirectory part of PATH.
+        If PATH does not exist, abort the evaluation."
+          :shorthand (lambda (args)
+                       (intern
+                        (file-name-nondirectory
+                         (directory-file-name (cadr args)))))))
     #+end_src
 * UI界面
   - 隐藏菜单栏、工具栏、滚动条，设置边框宽度
@@ -104,17 +109,11 @@
     #+END_SRC
   - 主题设置
     #+BEGIN_SRC emacs-lisp
-      ;; (use-package solarized-theme
-      ;;   :init (load-theme 'solarized-dark))
+      (setup (:package srcery-theme)
+        (load-theme 'srcery))
 
-      (use-package srcery-theme
-        :init (load-theme 'srcery))
-
-      ;; (use-package fantom-theme
-      ;;   :init (load-theme 'fantom))
-
-      ;; (use-package dracula-theme
-      ;;   :init (load-theme 'dracula))
+      ;; (setup (:package solarized-dark)
+      ;;   (load-theme 'solarized-dark))
     #+END_SRC
   - 开启自动换行，程序标题栏显示当前标记的文件名
     #+BEGIN_SRC emacs-lisp
@@ -126,112 +125,76 @@
   - modeline设置
     + 显示行号、列号以及当前文件的总字符数
       #+BEGIN_SRC emacs-lisp
-        (add-to-list 'after-init-hook 'line-number-mode)
-        (add-to-list 'after-init-hook 'column-number-mode)
-        (add-to-list 'after-init-hook 'size-indication-mode)
+        (setc line-number-mode t
+              column-number-mode t
+              size-indication-mode t)
       #+END_SRC
-    + Diminish
-      Diminish, a feature that removes certain minor modes from mode-line.
-      #+begin_src emacs-lisp
-        (use-package diminish
-          :config
-          (diminish 'eldoc-mode "El"))
-      #+end_src
   - 高亮当前行
     #+BEGIN_SRC emacs-lisp
-      (use-package hl-line
-        :ensure nil
-        :hook (after-init . global-hl-line-mode))
+      (setc global-hl-line-mode t)
     #+END_SRC
   - 高亮配对的括号
     #+begin_src emacs-lisp
-      (use-package paren
-        :ensure nil
-        :hook (after-init . show-paren-mode)
-        :config
-        (setq show-paren-when-point-in-periphery t))
-
+      (setc show-paren-mode t
+            show-paren-when-point-in-periphery t)
     #+end_src
   - 使用isearch搜索时，显示当前匹配项的数量
     #+BEGIN_SRC emacs-lisp
-    (setq isearch-lazy-count t
-        lazy-count-prefix-format "%s/%s ")
+      (setc isearch-lazy-count t
+            lazy-count-prefix-format "%s/%s ")
     #+END_SRC
   - whitespace设置
     #+BEGIN_SRC emacs-lisp
-      (use-package whitespace
-        :ensure nil
-        :hook
-        ((after-init . global-whitespace-mode)
-         (before-save . delete-trailing-whitespace))
-        :config
-        ;; Don't use different background for tabs.
-        (face-spec-set 'whitespace-tab
-                       '((t :background unspecified)))
-        ;; Only use background and underline for long lines, so we can still have
-        ;; syntax highlight.
+      (setc global-whitespace-mode t)
+      (add-hook 'before-save-hook #'delete-trailing-whitespace)
 
-        ;; For some reason use face-defface-spec as spec-type doesn't work.  My guess
-        ;; is it's due to the variables with the same name as the faces in
-        ;; whitespace.el.  Anyway, we have to manually set some attribute to
-        ;; unspecified here.
-        (face-spec-set 'whitespace-line
-                       '((((background light))
-                          :background "#d8d8d8" :foreground unspecified
-                          :underline t :weight unspecified)
-                         (t
-                          :background "#404040" :foreground unspecified
-                          :underline t :weight unspecified)))
+      ;; Don't use different background for tabs.
+      (face-spec-set 'whitespace-tab
+                     '((t :background unspecified)))
 
-        ;; Use softer visual cue for space before tabs.
-        (face-spec-set 'whitespace-space-before-tab
-                       '((((background light))
-                          :background "#d8d8d8" :foreground "#de4da1")
-                         (t
-                          :inherit warning
-                          :background "#404040" :foreground "#ee6aa7")))
+      ;; Only use background and underline for long lines, so we can still have
+      ;; syntax highlight.
 
-        (setq
-         whitespace-line-column nil
-         whitespace-style
-         '(face             ; visualize things below:
-           empty            ; empty lines at beginning/end of buffer
-           ;; lines-tail       ; lines go beyond `fill-column'
-           space-before-tab ; spaces before tab
-           trailing         ; trailing blanks
-           tabs             ; tabs (show by face)
-           tab-mark         ; tabs (show by symbol)
-           )))
+      ;; For some reason use face-defface-spec as spec-type doesn't work.  My guess
+      ;; is it's due to the variables with the same name as the faces in
+      ;; whitespace.el.  Anyway, we have to manually set some attribute to
+      ;; unspecified here.
+      (face-spec-set 'whitespace-line
+                     '((((background light))
+                        :background "#d8d8d8" :foreground unspecified
+                        :underline t :weight unspecified)
+                       (t
+                        :background "#404040" :foreground unspecified
+                        :underline t :weight unspecified)))
+
+      ;; Use softer visual cue for space before tabs.
+      (face-spec-set 'whitespace-space-before-tab
+                     '((((background light))
+                        :background "#d8d8d8" :foreground "#de4da1")
+                       (t
+                        :inherit warning
+                        :background "#404040" :foreground "#ee6aa7")))
+
+      (setq whitespace-line-column nil
+            whitespace-style '(face             ; visualize things below:
+                               empty            ; empty lines at beginning/end of buffer
+                               ;; lines-tail       ; lines go beyond `fill-column'
+                               space-before-tab ; spaces before tab
+                               trailing         ; trailing blanks
+                               tabs             ; tabs (show by face)
+                               tab-mark))       ; tabs (show by symbol)
+
     #+END_SRC
   - 设置鼠标滚轮一次滚动3行，使得滚动不会那么跳跃
     #+BEGIN_SRC emacs-lisp
       ;; scroll 3 line at a time (less "jumpy" than defaults)
-      (setq mouse-wheel-scroll-amount '(3 ((shift) . 1))) ;; 3 line at a time
-      (setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
-      (setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
-      ;; scroll-margin 3 靠近屏幕边沿3行时开始滚动，可以很好的看到上下文
-      (setq scroll-margin 3)
+      (setq mouse-wheel-scroll-amount '(3 ((shift) . 1)) ;; 3 line at a time
+            mouse-wheel-progressive-speed nil ;; don't accelerate scrolling
+            mouse-wheel-follow-mouse 't ;; scroll window under mouse
+            scroll-margin 3) ;; scroll-margin 3 靠近屏幕边沿3行时开始滚动，可以很好的看到上下文
     #+END_SRC
   - 字体设置
     #+BEGIN_SRC emacs-lisp :tangle yes
-      ;; (defun set-font (english chinese english-size chinese-size)
-      ;;   "set chinese, english font and size"
-      ;;   (set-face-attribute 'default nil :font
-      ;;                       (format "%s:pixelsize=%d"  english english-size))
-      ;;   (dolist (charset '(kana han symbol cjk-misc bopomofo))
-      ;;     (set-fontset-font (frame-parameter nil 'font) charset
-      ;;                       (font-spec :family chinese :size chinese-size))))
-
-      ;; (add-to-list 'after-make-frame-functions
-      ;;              (lambda (new-frame)
-      ;;                (select-frame new-frame)
-      ;;                (when (display-graphic-p)
-      ;;                    (set-font "JetBrains Mono" "Microsoft YaHei" 15 18))))
-
-      ;; (when (display-graphic-p)
-      ;;     (set-font "JetBrains Mono" "Microsoft YaHei" 15 18))
-
-
       ;; Auto generated by cnfonts
       ;; <https://github.com/tumashu/cnfonts>
       (set-face-attribute
@@ -252,7 +215,7 @@
 * 个人使用习惯方面的设置
   - 粘贴时覆盖选中的region
     #+BEGIN_SRC emacs-lisp
-      (delete-selection-mode t)
+      (setc delete-selection-mode t)
     #+END_SRC
   - 不锁定文件
     编辑文件时emacs会自动创建一个 ==.#== 的文件，在windows系统下会导致一些奇怪的问题，这里设置为不创建这个文件
@@ -273,12 +236,11 @@
     #+END_SRC
   - 使用F3查找光标当前所在位置的symbol
     #+begin_src emacs-lisp
-      (use-package symbol-overlay
-        :defer t
-        :bind (("C-<f3>" . symbol-overlay-put)
-               ("<f3>" . symbol-overlay-jump-next)
-               ("S-<f3>" . symbol-overlay-jump-prev)
-               ("C-S-<f3>" . symbol-overlay-remove-all)))
+      (setup (:package symbol-overlay)
+        (:global "C-<f3>" symbol-overlay-put
+                 "<f3>" symbol-overlay-jump-next
+                 "S-<f3>" symbol-overlay-jump-prev
+                 "C-S-<f3>" symbol-overlay-remove-all))
     #+end_src
     高亮一个symbol后，光标在该symbol上时会自动进入symbol-mode，symbol-overlay-map中快捷键具体如下：
     | i | symbol-overlay-put                | 高亮或取消高亮当前symbol      |
@@ -316,158 +278,173 @@
     #+END_SRC
   - 记录上次关闭前，光标在文件中的位置
     #+BEGIN_SRC emacs-lisp
-      (use-package saveplace
-        :ensure nil
-        :config
-        (setq save-place-file (locate-user-emacs-file "tmp/places"))
-        :hook (after-init . save-place-mode))
+      (setc save-place-mode t
+            save-place-file (locate-user-emacs-file "tmp/places"))
     #+END_SRC
   - 自动读取外部文件对正在编辑的文件的修改
     #+BEGIN_SRC emacs-lisp
-      (use-package autorevert
-        :ensure nil
-        :hook (after-init . global-auto-revert-mode))
+      (setc global-auto-revert-mode t)
     #+END_SRC
   - 单行内容过长时关闭一些mode
     有时候会打开一些文件，这些文件里的某一行特别长，而Emacs没有针对这种情况做特殊 处理，会导致整个界面卡死。这里启用so-long，当打开一个具有长行的文件时，它会自动检测并将一些可能导致严重性能的mode关闭， 如font-lock (syntax highlight)。
     #+BEGIN_SRC emacs-lisp
-      (use-package so-long
-        :ensure nil
-        :hook (after-init . global-so-long-mode))
+      (setc global-so-long-mode t)
     #+END_SRC
+  - 括号、引号自动配对补全
+    #+begin_src emacs-lisp :tangle no
+      (setc electric-pair-mode t)
+    #+end_src
 * projectile
   #+BEGIN_SRC emacs-lisp
-    (use-package projectile
-      :commands (projectile-project-root))
+    (setup (:package projectile)
+      (:autoload projectile-project-root))
   #+END_SRC
 * 自动补全
-  - company
-    Company, a text completion framework for Emacs.
-    The function smarter-tab-to-complete is to smartly resolve TAB conflicts in company and yasnippet packages.
-    #+BEGIN_SRC emacs-lisp
-      (use-package company
-        :diminish (company-mode . "[C]")
-        :hook (after-init . global-company-mode)
-        :config
-        (setq company-tooltip-align-annotations t
-              company-tooltip-limit 12
-              company-show-numbers t
-              company-idle-delay 0
-              company-echo-delay (if (display-graphic-p) nil 0)
-              company-minimum-prefix-length 4
-              company-require-match nil
-              company-dabbrev-ignore-case nil
-              company-dabbrev-downcase nil
-              company-dabbrev-code-ignore-case t
-              company-global-modes '(not shell-mode text-mode))
-
-        (setq company-backends '(company-elisp (company-keywords company-dabbrev-code)))
-
-        :bind
-        (:map company-active-map
-              ("<tab>" . company-complete-selection)
-              ("C-n" . company-select-next)
-              ("C-p" . company-select-previous)))
-    #+END_SRC
   - YASnippet
     YASnippet, a programming template system for Emacs. It loads YASnippet Snippets, a collection of yasnippet snippets for many languages.
     #+BEGIN_SRC emacs-lisp
-      (use-package yasnippet
-        :diminish (yas-minor-mode . "Yas")
-        :init
-        ;; (use-package yasnippet-snippets :after yasnippet)
-        (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
-        :hook ((prog-mode LaTeX-mode org-mode) . yas-minor-mode)
-        :bind
-        (:map yas-minor-mode-map ("C-c C-n" . yas-expand-from-trigger-key))
-        (:map yas-keymap
-              (("TAB" . smarter-yas-expand-next-field)
-               ([(tab)] . smarter-yas-expand-next-field)))
-        :config
-        (yas-reload-all)
-        (defun smarter-yas-expand-next-field ()
-          "Try to `yas-expand' then `yas-next-field' at current cursor position."
-          (interactive)
-          (let ((old-point (point))
-                (old-tick (buffer-chars-modified-tick)))
-            (yas-expand)
-            (when (and (eq old-point (point))
-                       (eq old-tick (buffer-chars-modified-tick)))
-              (ignore-errors (yas-next-field))))))
+      ;; (use-package yasnippet
+      ;;   :diminish (yas-minor-mode . "Yas")
+      ;;   :init
+      ;;   ;; (use-package yasnippet-snippets :after yasnippet)
+      ;;   (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
+      ;;   :hook ((prog-mode LaTeX-mode org-mode) . yas-minor-mode)
+      ;;   :bind
+      ;;   (:map yas-minor-mode-map ("C-c C-n" . yas-expand-from-trigger-key))
+      ;;   (:map yas-keymap
+      ;;         (("TAB" . smarter-yas-expand-next-field)
+      ;;          ([(tab)] . smarter-yas-expand-next-field)))
+      ;;   :config
+      ;;   (yas-reload-all)
+      ;;   (defun smarter-yas-expand-next-field ()
+      ;;     "Try to `yas-expand' then `yas-next-field' at current cursor position."
+      ;;     (interactive)
+      ;;     (let ((old-point (point))
+      ;;           (old-tick (buffer-chars-modified-tick)))
+      ;;       (yas-expand)
+      ;;       (when (and (eq old-point (point))
+      ;;                  (eq old-tick (buffer-chars-modified-tick)))
+      ;;         (ignore-errors (yas-next-field))))))
+      (setup (:package yasnippet yasnippet-snippets)
+        (:option yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
+        ;; Expansion via tab is too unreliable, but hippie-expand provides a
+        ;; good enough alternative.
+        (add-to-list 'hippie-expand-try-functions-list #'yas-hippie-try-expand)
+        (:with-mode yas-minor-mode
+          (:unbind "TAB" [(tab)])
+          (:hook-into prog-mode)))
+    #+END_SRC
+  - corfu
+    #+BEGIN_SRC emacs-lisp
+      (setup (:package corfu)
+        (:option corfu-auto t ;; Enable auto completion
+                 corfu-history-mode t
+                 corfu-quit-at-boundary t ;; Automatically quit at word boundary
+                 corfu-quit-no-match t ;; Automatically quit if there is no match
+                 )
+        (:bind-into corfu-map
+          "C-d" corfu-info-documentation
+          "C-s" corfu-info-location)
+        (:hook-into prog-mode))
     #+END_SRC
 * 文件备份
   #+BEGIN_SRC emacs-lisp
-    (setq auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "tmp/autosaves\\1") t)))
-    (setq auto-save-list-file-name (locate-user-emacs-file "tmp/autosave-list"))
+    (setq auto-save-list-file-name (locate-user-emacs-file "tmp/autosave-list")
+          auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "tmp/autosaves/") t t)))
 
     (setq backup-by-copying t) ;; 使用复件备份方式
     (setq backup-directory-alist `((".*" . ,(locate-user-emacs-file "tmp/backups")))) ;; 设置备份路径
 
     ;; 设置一下备份时的版本控制，这样更加安全。
     (setq version-control     t ;; 启用版本控制，即可以备份多次
-          kept-new-versions   6 ;; 保留最新的6个版本
-          kept-old-versions   2 ;; 备份最原始的两个版本，即第一次编辑前的文档，和第二次编辑前的文档
+          kept-new-versions   32 ;; 保留最新的32个版本
+          kept-old-versions   8 ;; 备份最原始的8个版本，即第一次编辑前的文档，和第二次编辑前的文档...
           delete-old-versions t ;; 删除中间版本
           )
 
     ;; 最近访问文件列表
     (setq recentf-max-saved-items 100)
     (setq recentf-save-file (locate-user-emacs-file "tmp/recentf"))
-    (add-to-list 'after-init-hook 'recentf-mode)
+    (with-eval-after-load 'consult
+      (recentf-mode +1))
     #+END_SRC
 * 搜索功能
   - 使用color-rg搜索
     #+BEGIN_SRC emacs-lisp
-      (use-package color-rg
-        :demand t
-        :load-path "lisp/color-rg"
-        :init
-        ;; 解决rg搜索中文乱码
+      (setup (:load-from "lisp/color-rg")
+        (require 'color-rg)
         (modify-coding-system-alist 'process "rg" '(utf-8 . gbk-dos))
-
         (defun my-color-rg-search-in-directory ()
           (interactive)
           (let ((directory (read-directory-name "In Directory:"))
                 (keyword (color-rg-read-input)))
             (color-rg-search-input keyword (expand-file-name directory))))
-        :bind (("C-c s f" . 'my-color-rg-search-in-directory)
-               ("C-c /" . 'color-rg-search-project)))
-    #+END_SRC
-  - selectrum
-    #+BEGIN_SRC emacs-lisp
-      (use-package selectrum
-        :init
-        (selectrum-mode +1))
 
-      (use-package orderless
-        :ensure t
-        :custom (completion-styles '(orderless)))
+        (global-set-key (kbd "C-c s f") #'my-color-rg-search-in-directory)
+        (global-set-key (kbd "C-c /") #'color-rg-search-project))
+    #+END_SRC
+  - vertico
+    #+BEGIN_SRC emacs-lisp
+      ;; Optionally use the `orderless' completion style. See
+      ;; `+orderless-dispatch' in the Consult wiki for an advanced Orderless style
+      ;; dispatcher. Additionally enable `partial-completion' for file path
+      ;; expansion. `partial-completion' is important for wildcard support.
+      ;; Multiple files can be opened at once with `find-file' if you enter a
+      ;; wildcard. You may also give the `initials' completion style a try.
+      (setup (:package orderless)
+        ;; Configure a custom style dispatcher (see the Consult wiki)
+        ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
+        ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+        (:option completion-styles '(orderless)
+                 completion-category-defaults nil
+                 completion-category-overrides '((file (styles partial-completion)))))
+
+      (setup (:package vertico vertico-posframe)
+        ;; Vertico
+        (:option vertico-mode t)
+        ;; Vertico posframe
+        (:option vertico-posframe-mode t))
     #+END_SRC
   - consult
     #+BEGIN_SRC emacs-lisp
-      (use-package consult
-        :custom
-        (consult-project-root-function #'projectile-project-root)
-        (consult-preview-key nil) ;; 关闭预览
-        :config
-        (defun my/consult-recent-file ()
-          (interactive)
-          (recentf-mode +1)
-          (consult-recent-file))
+      (setup (:package consult)
+	(:option consult-project-root-function #'projectile-project-root
+		 consult-preview-key nil ;; 关闭预览
+		 )
+	(:global [remap switch-to-buffer] #'consult-buffer
+		 [remap goto-line] #'consult-goto-line
+		 "C-c C-s" consult-line
+		 "C-c s j" consult-imenu
+		 "C-c f r" consult-recent-file
+		 "C-c f d" consult-fd)
 
-        (defun consult-find-fd (&optional dir initial)
-          (interactive "P")
-          (let ((consult-find-command "fd --color=never --full-path ARG OPTS"))
-            (consult-find dir initial)))
+	(:when-loaded
+	 (defvar consult--fd-command nil)
+	 (defun consult--fd-builder (input)
+	   (unless consult--fd-command
+	     (setq consult--fd-command
+		   (if (eq 0 (call-process-shell-command "fdfind"))
+		       "fdfind"
+		     "fd")))
+	   (pcase-let* ((`(,arg . ,opts) (consult--command-split input))
+			(`(,re . ,hl) (funcall consult--regexp-compiler
+					       arg 'extended t)))
+	     (when re
+	       (list :command (append
+			       (list consult--fd-command
+				     "--color=never" "--full-path"
+				     (consult--join-regexps re 'extended))
+			       opts)
+		     :highlight hl))))
 
-        ;; 让fd支持gbk
-        (modify-coding-system-alist 'process "fd" '(utf-8 . gbk-dos))
+	 (defun consult-fd (&optional dir initial)
+	   (interactive "P")
+	   (let* ((prompt-dir (consult--directory-prompt "Fd" dir))
+		  (default-directory (cdr prompt-dir)))
+	     (call-interactively #'find-file (consult--find (car prompt-dir) #'consult--fd-builder initial))))
 
-        :bind (("C-x b" . consult-buffer)
-               ("C-c C-s" . consult-line)
-               ("C-c s j" . consult-imenu)
-               ("C-c f r" . consult-recent-file)
-               ("C-c f d" . consult-find-fd)))
+	;; 让fd支持gbk
+	(modify-coding-system-alist 'process "fd" '(utf-8 . gb18030-dos))))
     #+END_SRC
 
 * 编程相关设置
@@ -478,17 +455,13 @@
               (lambda ()
                 (c-set-style "stroustrup")))
     #+END_SRC
-** lsp-mode
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (use-package lsp-mode)
-   #+END_SRC
 ** P01
    - 由于历史原因，项目默认使用gbk编码
-     #+BEGIN_SRC emacs-lisp
+     #+BEGIN_SRC emacs-lisp :tangle no
        (prefer-coding-system 'chinese-gbk-dos)
      #+END_SRC
    - 使用pike-mode来编辑项目脚本，因为pike-mode隶属于cc-mode包，因此这里使用cc-mode来设置
-     #+BEGIN_SRC emacs-lisp
+     #+BEGIN_SRC emacs-lisp :tangle no
        (setq auto-mode-alist (append (list (cons "/server_scripts/.+\\.[ch]$" 'pike-mode)) auto-mode-alist))
        (add-hook 'pike-mode-hook
                  '(lambda ()
@@ -500,93 +473,52 @@
                       'p01/id-text-at-point)))
      #+END_SRC
    - 使用conf-mode打开list文件
-     #+BEGIN_SRC emacs-lisp
+     #+BEGIN_SRC emacs-lisp :tangle no
        (use-package conf-mode
          :defer t
          :ensure nil
          :mode "\\.list$")
      #+END_SRC
-** rust
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (use-package rust-mode
-       :hook ((rust-mode . my/rust-lsp))
-       :config
-       (setq rust-format-on-save t)
-       (defun my/rust-lsp ()
-         (setq-local lsp-completion-enable nil
-                     compile-command "cargo build")))
-   #+END_SRC
 * 临时实验配置
-  - thing-edit
-    #+begin_src emacs-lisp :tangle no
-      (use-package thing-edit
-        :demand t
-        :load-path "lisp/thing-edit"
-        :config
-        (custom-set-faces '(thing-edit-font-lock-flash ((t (:inherit match))))))
+  - citre
+    #+begin_src emacs-lisp
+      (setup (:package citre)
+        (:option
+         ;; Set these if readtags/ctags is not in your path.
+         citre-readtags-program "/path/to/readtags"
+         citre-ctags-program "/path/to/ctags"
+         ;; Set this if you use project management plugin like projectile.  It's
+         ;; used for things like displaying paths relatively, see its docstring.
+         citre-project-root-function #'projectile-project-root
+         ;; Set this if you want to always use one location to create a tags file.
+         citre-default-create-tags-file-location 'global-cache
+         ;; See the "Create tags file" section above to know these options
+         citre-use-project-root-when-creating-tags t
+         citre-prompt-language-for-ctags-command t
+         ;; By default, when you open any file, and a tags file can be found for it,
+         ;; `citre-mode' is automatically enabled.  If you only want this to work for
+         ;; certain modes (like `prog-mode'), set it like this.
+         citre-auto-enable-citre-mode-modes '(prog-mode))
 
-      (use-package string-at-point
-        :demand t
-        :load-path "lisp"
-        :config
-        (defun thing-copy-string (kill-conditional)
-        "Copy string at current point.
-      With the universal argument, the text will also be killed."
-          (interactive "P")
-          (thing-edit 'string kill-conditional)))
-
-      (use-package hydra)
-
-      (defhydra my-kill-ring-save (:color 'pink)
-        "my kill ring save"
-        ("s" thing-copy-symbol)
-        ("x" thing-copy-sexp)
-        ("l" thing-copy-list)
-        ("\"" thing-copy-string))
-
-      (defun my-kill-ring-save (beg end &optional region)
-        (interactive (list (mark) (point)
-                           (prefix-numeric-value current-prefix-arg)))
-        (if (region-active-p)
-            (kill-ring-save beg end region)
-          (my-kill-ring-save/body)))
-
-      (global-set-key [remap kill-ring-save] 'my-kill-ring-save)
-
+        ;; This is needed in `:init' block for lazy load to work.
+        (require 'citre-config)
+        ;; Bind your frequently used commands.  Alternatively, you can define them
+        ;; in `citre-mode-map' so you can only use them when `citre-mode' is enabled.
+        (global-set-key (kbd "C-x c j") 'citre-jump)
+        (global-set-key (kbd "C-x c J") 'citre-jump-back)
+        (global-set-key (kbd "C-x c p") 'citre-ace-peek)
+        (global-set-key (kbd "C-x c u") 'citre-update-this-tags-file))
     #+end_src
 * 快捷键设置
   - 取消一些我不用的快捷键
     #+begin_src emacs-lisp
       (global-set-key (kbd "C-z") nil)
     #+end_src
-  - one-key
-    #+begin_src emacs-lisp :tangle no
-      (add-to-list 'load-path (locate-user-emacs-file "lisp/one-key"))
-      (require 'one-key)
-
-      (setq one-key-popup-window nil)
-
-      (one-key-create-menu
-       "THING-EDIT"
-       '(
-         (("s" . "Symbol") . thing-copy-symbol)
-         )
-       t
-       nil
-       'thing-copy-line
-       nil
-       nil)
-
-      (defun my-kill-ring-save (beg end &optional region)
-              (interactive (list (mark) (point)
-                                 (prefix-numeric-value current-prefix-arg)))
-              (if (region-active-p)
-                  (kill-ring-save beg end region)
-                (one-key-menu-thing-edit)))
-    #+end_src
 * 性能优化
-  - 设置垃圾回收出发阈值为128M，并且空闲超过15秒时进行垃圾回收
+  - 使用gcmh来管理gc
     #+begin_src emacs-lisp
-      (setq gc-cons-threshold 134217728)
-      (defvar k-gc-timer (run-with-idle-timer 15 t 'garbage-collect))
+      (setup gcmh
+        (:package gcmh)
+        (:option gcmh-mode t
+                 gcmh-high-cons-threshold 16777216))
     #+end_src
