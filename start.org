@@ -224,7 +224,7 @@
     #+END_SRC
   - 需要输入yes的时候，只输入y
     #+BEGIN_SRC emacs-lisp
-      (fset 'yes-or-no-p 'y-or-n-p)
+      (defalias 'yes-or-no-p 'y-or-n-p)
     #+END_SRC
   - 因为我平时电脑都不开声音，因此让bell可视化
     #+begin_src emacs-lisp
@@ -294,6 +294,10 @@
     #+begin_src emacs-lisp :tangle no
       (setc electric-pair-mode t)
     #+end_src
+  - 搜索时大小写敏感
+    #+begin_src emacs-lisp
+      (setq case-fold-search t)
+    #+end_src
 * projectile
   #+BEGIN_SRC emacs-lisp
     (setup (:package projectile)
@@ -303,14 +307,15 @@
   - YASnippet
     YASnippet, a programming template system for Emacs. It loads YASnippet Snippets, a collection of yasnippet snippets for many languages.
     #+BEGIN_SRC emacs-lisp
-      (setup (:package yasnippet yasnippet-snippets)
+      (setup (:package yasnippet)
         (:option yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
-        ;; Expansion via tab is too unreliable, but hippie-expand provides a
-        ;; good enough alternative.
-        (add-to-list 'hippie-expand-try-functions-list #'yas-hippie-try-expand)
         (:with-mode yas-minor-mode
           (:unbind "TAB" [(tab)])
-          (:hook-into prog-mode)))
+          (:hook-into prog-mode))
+
+        ;; Created 里面用到了calendar-month-name
+        (:with-feature calendar
+          (:autoload calendar-month-name)))
     #+END_SRC
   - corfu
     #+BEGIN_SRC emacs-lisp
@@ -319,12 +324,27 @@
                  corfu-history-mode t
                  corfu-quit-at-boundary t ;; Automatically quit at word boundary
                  corfu-quit-no-match t ;; Automatically quit if there is no match
-                 )
+                 corfu-preview-current nil
+                 corfu-echo-documentation nil
+                 corfu-auto-delay 1.0
+                 corfu-auto-prefix 5)
         (:bind-into corfu-map
           "C-d" corfu-info-documentation
           "C-s" corfu-info-location)
         (:hook-into prog-mode))
+
+      (setup (:package cape)
+        (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+        (add-to-list 'completion-at-point-functions #'cape-abbrev)
+        (add-to-list 'completion-at-point-functions #'cape-keyword))
     #+END_SRC
+  - abbrev
+    #+begin_src emacs-lisp
+      (setup dabbrev
+        ;; Swap M-/ and C-M-/
+        (:global "M-/" dabbrev-completion
+                 "C-M-/" dabbrev-expand))
+    #+end_src
 * 文件备份
   #+BEGIN_SRC emacs-lisp
     (setq auto-save-list-file-name (locate-user-emacs-file "tmp/autosave-list")
@@ -349,20 +369,81 @@
 * 搜索功能
   - 使用color-rg搜索
     #+BEGIN_SRC emacs-lisp
-      (setup (:load-from "lisp/color-rg")
-        (require 'color-rg)
+      (setup color-rg
+        (:load-from "lisp/color-rg")
+        (:option color-rg-max-column 1000)
+        (:autoload color-rg-search-project
+                   color-rg-read-input
+                   color-rg-search-input)
+
+        (:when-loaded
+          (defun color-rg-project-root-dir ()
+            (let ((dir (projectile-project-root)))
+              (if dir dir
+                default-directory))))
+
         (modify-coding-system-alist 'process "rg" '(utf-8 . gbk-dos))
+
         (defun my-color-rg-search-in-directory ()
           (interactive)
           (let ((directory (read-directory-name "In Directory:"))
                 (keyword (color-rg-read-input)))
             (color-rg-search-input keyword (expand-file-name directory))))
-
-        (global-set-key (kbd "C-c s f") #'my-color-rg-search-in-directory)
-        (global-set-key (kbd "C-c /") #'color-rg-search-project))
+        (:global "C-c s f" my-color-rg-search-in-directory
+                 "C-c /" color-rg-search-project))
     #+END_SRC
   - vertico
     #+BEGIN_SRC emacs-lisp
+      (setup (:package vertico vertico-posframe)
+        ;; Vertico
+        (:option vertico-mode t)
+        ;; Vertico posframe
+        (:option vertico-posframe-mode t))
+    #+END_SRC
+  - consult
+    #+BEGIN_SRC emacs-lisp
+      (setup (:package consult)
+        (:option consult-project-root-function #'projectile-project-root
+                 consult-preview-key nil ;; 关闭预览
+                 )
+        (:global [remap switch-to-buffer] #'consult-buffer
+                 [remap goto-line] #'consult-goto-line
+                 "C-c C-s" consult-line
+                 "C-c s j" consult-imenu
+                 "C-c f r" consult-recent-file
+                 "C-c f d" consult-fd
+                 "C-M-y" consult-yank-pop)
+
+        (:when-loaded
+          (defvar consult--fd-command nil)
+          (defun consult--fd-builder (input)
+            (unless consult--fd-command
+              (setq consult--fd-command
+                    (if (eq 0 (call-process-shell-command "fdfind"))
+                        "fdfind"
+                      "fd")))
+            (pcase-let* ((`(,arg . ,opts) (consult--command-split input))
+                         (`(,re . ,hl) (funcall consult--regexp-compiler
+                                                arg 'extended t)))
+              (when re
+                (list :command (append
+                                (list consult--fd-command
+                                      "--color=never" "--full-path"
+                                      (consult--join-regexps re 'extended))
+                                opts)
+                      :highlight hl))))
+
+          (defun consult-fd (&optional dir initial)
+            (interactive "P")
+            (let* ((prompt-dir (consult--directory-prompt "Fd" dir))
+                   (default-directory (cdr prompt-dir)))
+              (funcall #'find-file (consult--find (car prompt-dir) #'consult--fd-builder initial))))
+
+          ;; 让fd支持gbk
+          (modify-coding-system-alist 'process "fd" '(utf-8 . gb18030-dos))))
+    #+END_SRC
+  - 使用orderless进行过滤和排序补全选项
+    #+begin_src emacs-lisp
       ;; Optionally use the `orderless' completion style. See
       ;; `+orderless-dispatch' in the Consult wiki for an advanced Orderless style
       ;; dispatcher. Additionally enable `partial-completion' for file path
@@ -373,58 +454,10 @@
         ;; Configure a custom style dispatcher (see the Consult wiki)
         ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
         ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-        (:option completion-styles '(orderless)
+        (:option completion-styles '(orderless basic)
                  completion-category-defaults nil
-                 completion-category-overrides '((file (styles partial-completion)))))
-
-      (setup (:package vertico vertico-posframe)
-        ;; Vertico
-        (:option vertico-mode t)
-        ;; Vertico posframe
-        (:option vertico-posframe-mode t))
-    #+END_SRC
-  - consult
-    #+BEGIN_SRC emacs-lisp
-        (setup (:package consult)
-      (:option consult-project-root-function #'projectile-project-root
-           consult-preview-key nil ;; 关闭预览
-           )
-      (:global [remap switch-to-buffer] #'consult-buffer
-           [remap goto-line] #'consult-goto-line
-           "C-c C-s" consult-line
-           "C-c s j" consult-imenu
-           "C-c f r" consult-recent-file
-           "C-c f d" consult-fd)
-
-      (:when-loaded
-       (defvar consult--fd-command nil)
-       (defun consult--fd-builder (input)
-         (unless consult--fd-command
-           (setq consult--fd-command
-             (if (eq 0 (call-process-shell-command "fdfind"))
-                 "fdfind"
-               "fd")))
-         (pcase-let* ((`(,arg . ,opts) (consult--command-split input))
-              (`(,re . ,hl) (funcall consult--regexp-compiler
-                             arg 'extended t)))
-           (when re
-             (list :command (append
-                     (list consult--fd-command
-                       "--color=never" "--full-path"
-                       (consult--join-regexps re 'extended))
-                     opts)
-               :highlight hl))))
-
-       (defun consult-fd (&optional dir initial)
-         (interactive "P")
-         (let* ((prompt-dir (consult--directory-prompt "Fd" dir))
-            (default-directory (cdr prompt-dir)))
-           (call-interactively #'find-file (consult--find (car prompt-dir) #'consult--fd-builder initial))))
-
-      ;; 让fd支持gbk
-      (modify-coding-system-alist 'process "fd" '(utf-8 . gb18030-dos))))
-    #+END_SRC
-
+                 completion-category-overrides '((file (styles basic partial-completion)))))
+    #+end_src
 * 编程相关设置
   - 使用4个空格代替tab
     #+BEGIN_SRC emacs-lisp
@@ -440,53 +473,96 @@
      #+END_SRC
    - 使用pike-mode来编辑项目脚本，因为pike-mode隶属于cc-mode包，因此这里使用cc-mode来设置
      #+BEGIN_SRC emacs-lisp :tangle no
-       (setq auto-mode-alist (append (list (cons "/server_scripts/.+\\.[ch]$" 'pike-mode)) auto-mode-alist))
-       (add-hook 'pike-mode-hook
-                 '(lambda ()
+       (setup pike-mode
+         (:file-match "/server_scripts/.+\\.[ch]$")
+         (:hook (lambda ()
                     (set (make-local-variable 'imenu-generic-expression)
                          (list
                           (list nil "^\\<[^()\n]*[^[:alnum:]_:<>~]\\([[:alpha:]_][[:alnum:]_:<>~]*\\)\\([     \n]\\|\\\\\n\\)*(\\([   \n]\\|\\\\\n\\)*\\([^   \n(*][^()]*\\(([^()]*)[^()]*\\)*\\)?)\\([   \n]\\|\\\\\n\\)*[^  \n;(]" 1)))
 
-                    (define-key pike-mode-map [(f2)]
-                      'p01/id-text-at-point)))
+                    (setq c-multiline-string-start-char nil)
+
+                    (define-key pike-mode-map [(f2)] 'p01/id-text-at-point)
+                    (define-key pike-mode-map "," nil) ;; 输入“,”时不重新格式化代码
+                    (define-key pike-mode-map "(" nil) ;; 输入“(”时不重新格式化代码
+                    (define-key pike-mode-map ")" nil) ;; 输入“)”时不重新格式化代码
+                    (define-key pike-mode-map ":" nil) ;; 输入“:”时不重新格式化代码
+                    (define-key pike-mode-map ";" nil) ;; 输入“;”时不重新格式化代码
+                    (define-key pike-mode-map "/" nil) ;; 输入“/”时不重新格式化代码
+                    )))
      #+END_SRC
    - 使用conf-mode打开list文件
      #+BEGIN_SRC emacs-lisp :tangle no
-       (use-package conf-mode
-         :defer t
-         :ensure nil
-         :mode "\\.list$")
+       (setup conf-mode
+         (:file-match "\\.list$"))
      #+END_SRC
-* 临时实验配置
   - citre
-    #+begin_src emacs-lisp
+    #+begin_src emacs-lisp :tangle no
       (setup (:package citre)
-        (:option
-         ;; Set these if readtags/ctags is not in your path.
-         citre-readtags-program "/path/to/readtags"
-         citre-ctags-program "/path/to/ctags"
-         ;; Set this if you use project management plugin like projectile.  It's
-         ;; used for things like displaying paths relatively, see its docstring.
-         citre-project-root-function #'projectile-project-root
-         ;; Set this if you want to always use one location to create a tags file.
-         citre-default-create-tags-file-location 'global-cache
-         ;; See the "Create tags file" section above to know these options
-         citre-use-project-root-when-creating-tags t
-         citre-prompt-language-for-ctags-command t
-         ;; By default, when you open any file, and a tags file can be found for it,
-         ;; `citre-mode' is automatically enabled.  If you only want this to work for
-         ;; certain modes (like `prog-mode'), set it like this.
-         citre-auto-enable-citre-mode-modes '(prog-mode))
+        (:option citre-enable-imenu-integration nil
+
+                 ;; Set these if readtags/ctags is not in your path.
+                 citre-readtags-program "/path/to/readtags"
+                 citre-ctags-program "/path/to/ctags"
+
+                 ;; Set this if you use project management plugin like projectile.  It's
+                 ;; used for things like displaying paths relatively, see its docstring.
+                 citre-project-root-function #'projectile-project-root
+
+                 ;; Set this if you want to always use one location to create a tags file.
+                 ;; citre-default-create-tags-file-location 'global-cache
+
+                 ;; See the "Create tags file" section above to know these options
+                 citre-use-project-root-when-creating-tags t
+
+                 ;; citre-prompt-language-for-ctags-command t
+                 ;; By default, when you open any file, and a tags file can be found for it,
+                 ;; `citre-mode' is automatically enabled.  If you only want this to work for
+                 ;; certain modes (like `prog-mode'), set it like this.
+                 citre-auto-enable-citre-mode-modes '(prog-mode)
+
+                 citre-enable-capf-integration t
+                 citre-capf-optimize-for-popup t)
 
         ;; This is needed in `:init' block for lazy load to work.
         (require 'citre-config)
         ;; Bind your frequently used commands.  Alternatively, you can define them
         ;; in `citre-mode-map' so you can only use them when `citre-mode' is enabled.
-        (global-set-key (kbd "C-x c j") 'citre-jump)
-        (global-set-key (kbd "C-x c J") 'citre-jump-back)
-        (global-set-key (kbd "C-x c p") 'citre-ace-peek)
-        (global-set-key (kbd "C-x c u") 'citre-update-this-tags-file))
+        (global-set-key (kbd "M-.") 'citre-jump)
+        (global-set-key (kbd "M-,") 'citre-jump-back)
+        (global-set-key (kbd "C-c t j") 'citre-jump)
+        (global-set-key (kbd "C-c t J") 'citre-jump-back)
+        (global-set-key (kbd "C-c t u") 'citre-update-this-tags-file)
+        (global-set-key (kbd "C-c t p") 'citre-peek)
+
+        (:when-loaded
+          (defvar citre-lang-pike-plist
+            `(:completion-filter
+              citre-lang-pike-completion-filter
+              "pike language support for Citre."))
+
+          (defvar citre-lang-pike-completion-filter
+            (citre-core-filter 'typeref "typename:private" 'prefix nil t t))
+
+          (setf (alist-get 'pike-mode citre-language-support-alist)
+                citre-lang-pike-plist)))
     #+end_src
+    ctags 命令
+    #+begin_src text :tangle no
+      ctags
+      -o
+      %TAGFILE%
+      --languages=c++
+      --kinds-c++=df
+      --langmap=c++:.c.h
+      -h .h.c
+      --fields=*
+      --extras=*
+      --input-encoding=GBK
+      --exclude=xgs/*
+      -R
+    #+end_src
+* 临时实验配置
 * 快捷键设置
   - 取消一些我不用的快捷键
     #+begin_src emacs-lisp
