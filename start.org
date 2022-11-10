@@ -2,34 +2,39 @@
 #+PROPERTY: header-args    :tangle yes
 * 文件头
   - 首先在文件开头声明本文件内代码使用词法作用域
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       ;;; start.el -*- lexical-binding: t; -*-
-    #+end_src
+    #+END_SRC
   - 以服务器模式启动
-    #+begin_src emacs-lisp :tangle no
+    #+BEGIN_SRC emacs-lisp :tangle no
       (server-start)
-    #+end_src
+    #+END_SRC
   - 定义一些后面要用到的变量
-    无
+    1. 设置 leader key
+       #+BEGIN_SRC emacs-lisp
+         (setq my-leader-key "M-i")
+         (define-prefix-command 'my-leader-key-map)
+         (global-set-key (kbd my-leader-key) 'my-leader-key-map)
+       #+END_SRC
   - 定义一些后面要用到的函数
-    #+begin_src emacs-lisp :tangle no
+    #+BEGIN_SRC emacs-lisp :tangle no
       (defun version> (v1 v2) (version< v2 v1))
       (defun version>= (v1 v2) (version<= v2 v1))
-    #+end_src
+    #+END_SRC
   - 设置custom文件地址，并载入
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (setq custom-file (locate-user-emacs-file "custom.el"))
       (when (file-exists-p custom-file)
         (load custom-file))
-    #+end_src
+    #+END_SRC
   - 可执行文件路径
-    #+begin_src emacs-lisp :tangle no
-      (add-to-list 'exec-path "C:/link")
-    #+end_src
+    #+BEGIN_SRC emacs-lisp :tangle yes
+      (add-to-list 'exec-path (locate-user-emacs-file "bin"))
+    #+END_SRC
   - 解决一些命令行工具乱码问题
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-    #+end_src
+    #+END_SRC
 * 包管理器
   - 设置使用国内镜像
     #+BEGIN_SRC emacs-lisp
@@ -55,7 +60,7 @@
         (package-initialize))
     #+END_SRC
   - setup.el设置
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (eval-and-compile
         (unless (require 'setup nil t)
           (package-install 'setup)
@@ -65,6 +70,14 @@
           "Customize user options using ARGS like `setq'."
           (declare (debug setq))
           `(setup (:option ,@args)))
+
+        (setup-define :leader-key
+          (lambda (key command)
+            `(global-set-key (kbd (concat ,my-leader-key " " ,key)) ,command))
+          :documentation "Globally bind LEADER-KEY + KEY to COMMAND."
+          :debug '(form sexp)
+          :ensure '(kbd func)
+          :repeatable t)
 
         (setup-define :autoload
           (lambda (func)
@@ -98,7 +111,7 @@
                        (intern
                         (file-name-nondirectory
                          (directory-file-name (cadr args)))))))
-    #+end_src
+    #+END_SRC
 * UI界面
   - 隐藏菜单栏、工具栏、滚动条，设置边框宽度
     放到eraly-init.el中去了，这屏蔽
@@ -109,8 +122,11 @@
     #+END_SRC
   - 主题设置
     #+BEGIN_SRC emacs-lisp
-      (setup (:package srcery-theme)
-        (load-theme 'srcery))
+      ;; (setup (:package srcery-theme)
+      ;;   (load-theme 'srcery))
+
+      (setup (:package doom-themes)
+        (load-theme 'doom-one))
 
       ;; (setup (:package solarized-dark)
       ;;   (load-theme 'solarized-dark))
@@ -134,10 +150,10 @@
       (setc global-hl-line-mode t)
     #+END_SRC
   - 高亮配对的括号
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (setc show-paren-mode t
             show-paren-when-point-in-periphery t)
-    #+end_src
+    #+END_SRC
   - 使用isearch搜索时，显示当前匹配项的数量
     #+BEGIN_SRC emacs-lisp
       (setc isearch-lazy-count t
@@ -217,6 +233,19 @@
     #+BEGIN_SRC emacs-lisp
       (setc delete-selection-mode t)
     #+END_SRC
+  - 不要自动格式化代码
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (electric-indent-mode -1)
+    #+END_SRC
+  - 关闭全局eldoc，只在emacs-lisp-mode中打开
+    #+BEGIN_SRC emacs-lisp
+      (setc global-eldoc-mode nil)
+      (add-hook 'emacs-lisp-mode-hook (lambda () (eldoc-mode +1)))
+    #+END_SRC
+  - 括号自动补全
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (electric-pair-mode +1)
+    #+END_SRC
   - 不锁定文件
     编辑文件时emacs会自动创建一个 ==.#== 的文件，在windows系统下会导致一些奇怪的问题，这里设置为不创建这个文件
     #+BEGIN_SRC emacs-lisp
@@ -227,21 +256,21 @@
       (defalias 'yes-or-no-p 'y-or-n-p)
     #+END_SRC
   - 因为我平时电脑都不开声音，因此让bell可视化
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (setq visible-bell t)
-    #+end_src
+    #+END_SRC
   - 使用ibuffer
     #+BEGIN_SRC emacs-lisp
       (global-set-key (kbd "C-x C-b") 'ibuffer)
     #+END_SRC
   - 使用F3查找光标当前所在位置的symbol
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (setup (:package symbol-overlay)
         (:global "C-<f3>" symbol-overlay-put
                  "<f3>" symbol-overlay-jump-next
                  "S-<f3>" symbol-overlay-jump-prev
                  "C-S-<f3>" symbol-overlay-remove-all))
-    #+end_src
+    #+END_SRC
     高亮一个symbol后，光标在该symbol上时会自动进入symbol-mode，symbol-overlay-map中快捷键具体如下：
     | i | symbol-overlay-put                | 高亮或取消高亮当前symbol      |
     | n | symbol-overlay-jump-next          | 跳转到下一个位置              |
@@ -276,6 +305,12 @@
 
       (global-set-key [remap kill-ring-save] 'my-kill-ring-save)
     #+END_SRC
+  - 剪贴板的一些设置
+    #+BEGIN_SRC emacs-lisp
+      (setc save-interprogram-paste-before-kill t
+            kill-do-not-save-duplicates t
+            mouse-yank-at-point t)
+    #+END_SRC
   - 记录上次关闭前，光标在文件中的位置
     #+BEGIN_SRC emacs-lisp
       (setc save-place-mode t
@@ -290,14 +325,22 @@
     #+BEGIN_SRC emacs-lisp
       (setc global-so-long-mode t)
     #+END_SRC
-  - 括号、引号自动配对补全
-    #+begin_src emacs-lisp :tangle no
-      (setc electric-pair-mode t)
-    #+end_src
   - 搜索时大小写敏感
-    #+begin_src emacs-lisp
-      (setq case-fold-search t)
-    #+end_src
+    #+BEGIN_SRC emacs-lisp
+      (setq case-fold-search nil)
+    #+END_SRC
+
+* org-mode
+  - 开启org-babel的sql功能
+    #+BEGIN_SRC emacs-lisp
+      (setup org
+        (:option org-confirm-babel-evaluate nil)
+        (:when-loaded
+          (add-to-list 'org-babel-load-languages '(sql . t))))
+
+      (setup ob-sql
+        (:autoload org-babel-execute:sql))
+    #+END_SRC
 * projectile
   #+BEGIN_SRC emacs-lisp
     (setup (:package projectile)
@@ -321,17 +364,22 @@
     #+BEGIN_SRC emacs-lisp
       (setup (:package corfu)
         (:option corfu-auto t ;; Enable auto completion
-                 corfu-history-mode t
+                 ;; corfu-separator ?_ ;; Set to orderless separator, if not using space
                  corfu-quit-at-boundary t ;; Automatically quit at word boundary
                  corfu-quit-no-match t ;; Automatically quit if there is no match
                  corfu-preview-current nil
                  corfu-echo-documentation nil
-                 corfu-auto-delay 1.0
+                 corfu-auto-delay 0.2
                  corfu-auto-prefix 5)
         (:bind-into corfu-map
           "C-d" corfu-info-documentation
-          "C-s" corfu-info-location)
-        (:hook-into prog-mode))
+          "C-s" corfu-info-location
+          "M-SPC" corfu-insert-separator)
+        (:hook-into prog-mode)
+
+        ;; Unbind TAB with corfu-complete，to avoid the conflict with yasnippet
+        (:with-map corfu-map
+          (:unbind "TAB" [(tab)])))
 
       (setup (:package cape)
         (add-to-list 'completion-at-point-functions #'cape-dabbrev)
@@ -339,12 +387,12 @@
         (add-to-list 'completion-at-point-functions #'cape-keyword))
     #+END_SRC
   - abbrev
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (setup dabbrev
         ;; Swap M-/ and C-M-/
         (:global "M-/" dabbrev-completion
                  "C-M-/" dabbrev-expand))
-    #+end_src
+    #+END_SRC
 * 文件备份
   #+BEGIN_SRC emacs-lisp
     (setq auto-save-list-file-name (locate-user-emacs-file "tmp/autosave-list")
@@ -363,8 +411,6 @@
     ;; 最近访问文件列表
     (setq recentf-max-saved-items 100)
     (setq recentf-save-file (locate-user-emacs-file "tmp/recentf"))
-    (with-eval-after-load 'consult
-      (recentf-mode +1))
     #+END_SRC
 * 搜索功能
   - 使用color-rg搜索
@@ -382,23 +428,22 @@
               (if dir dir
                 default-directory))))
 
-        (modify-coding-system-alist 'process "rg" '(utf-8 . gbk-dos))
+        ;; (modify-coding-system-alist 'process "rg" '(utf-8 . gbk-dos))
 
         (defun my-color-rg-search-in-directory ()
           (interactive)
           (let ((directory (read-directory-name "In Directory:"))
                 (keyword (color-rg-read-input)))
             (color-rg-search-input keyword (expand-file-name directory))))
-        (:global "C-c s f" my-color-rg-search-in-directory
-                 "C-c /" color-rg-search-project))
+        (:leader-key "s f" my-color-rg-search-in-directory
+                     "/" color-rg-search-project))
     #+END_SRC
   - vertico
-    #+BEGIN_SRC emacs-lisp
-      (setup (:package vertico vertico-posframe)
+    #+BEGIN_SRC emacs-lisp :tangle yes
+      (setup (:package vertico)
         ;; Vertico
-        (:option vertico-mode t)
-        ;; Vertico posframe
-        (:option vertico-posframe-mode t))
+        (:option vertico-mode t
+                 vertico-sort-function #'vertico-sort-alpha))
     #+END_SRC
   - consult
     #+BEGIN_SRC emacs-lisp
@@ -408,13 +453,15 @@
                  )
         (:global [remap switch-to-buffer] #'consult-buffer
                  [remap goto-line] #'consult-goto-line
-                 "C-c C-s" consult-line
-                 "C-c s j" consult-imenu
-                 "C-c f r" consult-recent-file
-                 "C-c f d" consult-fd
                  "C-M-y" consult-yank-pop)
+        (:leader-key "s s" consult-line
+                     "s j" consult-imenu
+                     "f r" consult-recent-file
+                     "f d" consult-fd
+                     "b b" consult-buffer)
 
         (:when-loaded
+          (recentf-mode +1)
           (defvar consult--fd-command nil)
           (defun consult--fd-builder (input)
             (unless consult--fd-command
@@ -443,7 +490,7 @@
           (modify-coding-system-alist 'process "fd" '(utf-8 . gb18030-dos))))
     #+END_SRC
   - 使用orderless进行过滤和排序补全选项
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       ;; Optionally use the `orderless' completion style. See
       ;; `+orderless-dispatch' in the Consult wiki for an advanced Orderless style
       ;; dispatcher. Additionally enable `partial-completion' for file path
@@ -457,7 +504,7 @@
         (:option completion-styles '(orderless basic)
                  completion-category-defaults nil
                  completion-category-overrides '((file (styles basic partial-completion)))))
-    #+end_src
+    #+END_SRC
 * 编程相关设置
   - 使用4个空格代替tab
     #+BEGIN_SRC emacs-lisp
@@ -480,6 +527,7 @@
                          (list
                           (list nil "^\\<[^()\n]*[^[:alnum:]_:<>~]\\([[:alpha:]_][[:alnum:]_:<>~]*\\)\\([     \n]\\|\\\\\n\\)*(\\([   \n]\\|\\\\\n\\)*\\([^   \n(*][^()]*\\(([^()]*)[^()]*\\)*\\)?)\\([   \n]\\|\\\\\n\\)*[^  \n;(]" 1)))
 
+                    ;; 关闭对多行字符串的支持。该功能严重影响性能
                     (setq c-multiline-string-start-char nil)
 
                     (define-key pike-mode-map [(f2)] 'p01/id-text-at-point)
@@ -497,10 +545,9 @@
          (:file-match "\\.list$"))
      #+END_SRC
   - citre
-    #+begin_src emacs-lisp :tangle no
+    #+BEGIN_SRC emacs-lisp :tangle no
       (setup (:package citre)
         (:option citre-enable-imenu-integration nil
-
                  ;; Set these if readtags/ctags is not in your path.
                  citre-readtags-program "/path/to/readtags"
                  citre-ctags-program "/path/to/ctags"
@@ -524,31 +571,18 @@
                  citre-enable-capf-integration t
                  citre-capf-optimize-for-popup t)
 
-        ;; This is needed in `:init' block for lazy load to work.
-        (require 'citre-config)
         ;; Bind your frequently used commands.  Alternatively, you can define them
         ;; in `citre-mode-map' so you can only use them when `citre-mode' is enabled.
-        (global-set-key (kbd "M-.") 'citre-jump)
-        (global-set-key (kbd "M-,") 'citre-jump-back)
-        (global-set-key (kbd "C-c t j") 'citre-jump)
-        (global-set-key (kbd "C-c t J") 'citre-jump-back)
-        (global-set-key (kbd "C-c t u") 'citre-update-this-tags-file)
-        (global-set-key (kbd "C-c t p") 'citre-peek)
-
-        (:when-loaded
-          (defvar citre-lang-pike-plist
-            `(:completion-filter
-              citre-lang-pike-completion-filter
-              "pike language support for Citre."))
-
-          (defvar citre-lang-pike-completion-filter
-            (citre-core-filter 'typeref "typename:private" 'prefix nil t t))
-
-          (setf (alist-get 'pike-mode citre-language-support-alist)
-                citre-lang-pike-plist)))
-    #+end_src
+        (:global "M-." citre-jump
+                 "M-," citre-jump-back)
+        (:leader-key
+         "t j" citre-jump
+         "t J" citre-jump-back
+         "t u" citre-update-this-tags-file
+         "t p" citre-peek))
+    #+END_SRC
     ctags 命令
-    #+begin_src text :tangle no
+    #+BEGIN_SRC text :tangle no
       ctags
       -o
       %TAGFILE%
@@ -561,18 +595,53 @@
       --input-encoding=GBK
       --exclude=xgs/*
       -R
-    #+end_src
+    #+END_SRC
 * 临时实验配置
+  - embark
+    #+BEGIN_SRC emacs-lisp :tangle yes
+      (setup (:package marginalia)
+        (require 'marginalia
+        (marginalia-mode)))
+
+      (setup (:package embark)
+        (:global "C-." embark-act
+                 "C-;" embark-dwim
+                 "C-h B" embark-bindings ;; alternative for `describe-bindings'
+                 )
+
+        ;; Optionally replace the key help with a completing-read interface
+        (setq prefix-help-command #'embark-prefix-help-command)
+
+        ;; Hide the mode line of the Embark live/completions buffers
+        (add-to-list 'display-buffer-alist
+                     '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                       nil
+                       (window-parameters (mode-line-format . none)))))
+    #+END_SRC
+  - eglot
+    #+BEGIN_SRC emacs-lisp :tangle yes
+      (setup (:package eglot))
+      ;;(add-to-list 'eglot-server-programs `(rust-mode . ("rust-analyzer" :initializationOptions (:cargo (:features "all")))))
+      (setup (:package rust-mode)
+        (:hook eglot-ensure))
+    #+END_SRC
+
 * 快捷键设置
   - 取消一些我不用的快捷键
-    #+begin_src emacs-lisp
+    禁用以下快捷键，防止误按导致emacs被关闭、隐藏
+    #+BEGIN_SRC emacs-lisp
+      (global-unset-key (kbd "C-x C-c"))
       (global-set-key (kbd "C-z") nil)
-    #+end_src
+    #+END_SRC
+  - window切换
+    #+BEGIN_SRC emacs-lisp
+      (global-set-key [C-tab] 'other-window)
+    #+END_SRC
 * 性能优化
   - 使用gcmh来管理gc
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (setup gcmh
         (:package gcmh)
         (:option gcmh-mode t
                  gcmh-high-cons-threshold 16777216))
-    #+end_src
+    #+END_SRC
