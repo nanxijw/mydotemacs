@@ -5,3 +5,6 @@ cnfonts/
 etc/snippets/
 start.el
 .lsp-session-v1
+network-security.data
+eshell/history
+url/cookies
