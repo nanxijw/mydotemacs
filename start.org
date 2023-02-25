@@ -489,23 +489,55 @@
                  "C-M-/" dabbrev-expand))
     #+END_SRC
 * 文件备份
-  #+BEGIN_SRC emacs-lisp
-    (setq auto-save-list-file-name (locate-user-emacs-file "tmp/autosave-list")
-          auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "tmp/autosaves/") t t)))
+  - emacs内置的文件备份
+    1. 自动保存文件设置
+       调整一下保存文件位置
+       #+BEGIN_SRC emacs-lisp
+         (setq auto-save-list-file-name (locate-user-emacs-file "tmp/autosave-list")
+               auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "tmp/autosaves/") t t)))
+       #+END_SRC
+    2. 最近访问文件列表
+       #+BEGIN_SRC emacs-lisp
+         (setq recentf-max-saved-items 100)
+         (setq recentf-save-file (locate-user-emacs-file "tmp/recentf"))
+       #+END_SRC
+    3. 备份文件版本
+       #+BEGIN_SRC emacs-lisp
+         ;; 设置一下备份时的版本控制，这样更加安全。
+         (setq version-control     t ;; 启用版本控制，即可以备份多次
+               kept-new-versions   32 ;; 保留最新的32个版本
+               kept-old-versions   8 ;; 备份最原始的8个版本，即第一次编辑前的文档，和第二次编辑前的文档...
+               delete-old-versions t ;; 删除中间版本
+               backup-directory-alist `((".*" . ,(locate-user-emacs-file "tmp/backups"))) ;; 设置备份路径
+               backup-by-copying t ;; 使用复件备份方式
+               )
+       #+END_SRC
+  - 每次保存都备份文件
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (setup backup-each-save
+        (:load-from "lisp")
+        (:auto-load backup-each-save
+                    backup-each-save-clean-up)
 
-    (setq backup-by-copying t) ;; 使用复件备份方式
-    (setq backup-directory-alist `((".*" . ,(locate-user-emacs-file "tmp/backups")))) ;; 设置备份路径
+        ;; 关闭emacs内置的文件备份功能
+        (setq make-backup-files nil)
 
-    ;; 设置一下备份时的版本控制，这样更加安全。
-    (setq version-control     t ;; 启用版本控制，即可以备份多次
-          kept-new-versions   32 ;; 保留最新的32个版本
-          kept-old-versions   8 ;; 备份最原始的8个版本，即第一次编辑前的文档，和第二次编辑前的文档...
-          delete-old-versions t ;; 删除中间版本
-          )
+        (defun backup-each-save-filter (filename)
+          (let ((ignored-filenames
+                 '("^/tmp" "\\.cache$" "\\.emacs-places$"
+                   "\\.recentf$" ".newsrc\\(\\.eld\\)?"))
+                (matched-ignored-filename nil))
+            (mapc
+             (lambda (x)
+               (when (string-match x filename)
+                 (setq matched-ignored-filename t)))
+             ignored-filenames)
+            (not matched-ignored-filename)))
 
-    ;; 最近访问文件列表
-    (setq recentf-max-saved-items 100)
-    (setq recentf-save-file (locate-user-emacs-file "tmp/recentf"))
+        (setq backup-each-save-filter-function 'backup-each-save-filter)
+        (setq backup-each-save-time-format "%Y%m%d_%H%M%S")
+        (add-hook 'after-save-hook 'backup-each-save)
+        (add-hook 'kill-emacs-hook #'(lambda () (backup-each-save-clean-up 15))))
     #+END_SRC
 * 搜索功能
   - 使用color-rg搜索
@@ -742,7 +774,7 @@
     #+BEGIN_SRC emacs-lisp
       (global-set-key [C-tab] 'other-window)
     #+END_SRC
-* 性能优化
+* 最后执行
   - 使用gcmh来管理gc
     #+BEGIN_SRC emacs-lisp
       (setup gcmh
@@ -750,4 +782,8 @@
         (:when-loaded (:mode-line gcmh-mode nil))
         (setq gcmh-high-cons-threshold 16777216) ; 16mb, or 32mb, or 64mb, or *maybe* 128mb, BUT NOT 512mb
         (add-hook 'after-init-hook #'gcmh-mode))
+    #+END_SRC
+  - 显示启动时间
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (emacs-init-time)
     #+END_SRC
