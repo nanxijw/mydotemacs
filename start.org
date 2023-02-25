@@ -97,6 +97,17 @@
         ;;   :documentation "If EXECUTABLE is not in the path, stop here."
         ;;   :repeatable 1)
 
+        (setup-define :mode-line
+          (lambda (mode show)
+            (if show
+                `(setf (alist-get ',mode minor-mode-alist) '(,show))
+              `(setq minor-mode-alist
+                     (delq (assq ',mode minor-mode-alist)
+                           minor-mode-alist))))
+          :documentation "Set the mode-line of the specified mode.
+      Alternatively, if 'show' is set to nil, hide the mode from mode-line."
+          :repeatable t)
+
         (setup-define :load-from
           (lambda (path)
             `(let ((path* (expand-file-name (locate-user-emacs-file ,path))))
@@ -426,7 +437,9 @@
   - Projectile
     #+BEGIN_SRC emacs-lisp :tangle no
       (setup (:package projectile)
-        (:autoload projectile-project-root))
+        (:autoload projectile-project-root)
+        (:when-loaded
+          (:mode-line projectile-mode " Proj")))
     #+END_SRC
 * 自动补全
   - YASnippet
@@ -734,8 +747,7 @@
     #+BEGIN_SRC emacs-lisp
       (setup gcmh
         (:package gcmh)
+        (:when-loaded (:mode-line gcmh-mode nil))
         (setq gcmh-high-cons-threshold 16777216) ; 16mb, or 32mb, or 64mb, or *maybe* 128mb, BUT NOT 512mb
-        (:when-loaded
-          (setf (alist-get 'gcmh-mode minor-mode-alist) '("")))
-        (add-hook 'after-init-hook 'gcmh-mode))
+        (add-hook 'after-init-hook #'gcmh-mode))
     #+END_SRC

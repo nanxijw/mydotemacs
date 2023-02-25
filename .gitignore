@@ -8,3 +8,4 @@ start.el
 network-security.data
 eshell/history
 url/cookies
+projectile-bookmarks.eld
