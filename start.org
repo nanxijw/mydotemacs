@@ -32,7 +32,7 @@
       (add-to-list 'exec-path (locate-user-emacs-file "bin"))
     #+END_SRC
   - 解决一些命令行工具乱码问题
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle yes
       (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
     #+END_SRC
 * 包管理器
@@ -66,10 +66,10 @@
           (package-install 'setup)
           (require 'setup))
 
-        (defmacro setc (&rest args)
-          "Customize user options using ARGS like `setq'."
-          (declare (debug setq))
-          `(setup (:option ,@args)))
+        ;; (defmacro setc (&rest args)
+        ;;   "Customize user options using ARGS like `setq'."
+        ;;   (declare (debug setq))
+        ;;   `(setup (:option ,@args)))
 
         (setup-define :leader-key
           (lambda (key command)
@@ -90,12 +90,12 @@
           :repeatable t
           :signature '(FUNC ...))
 
-        (setup-define :needs
-          (lambda (executable)
-            `(unless (executable-find ,executable)
-               ,(setup-quit)))
-          :documentation "If EXECUTABLE is not in the path, stop here."
-          :repeatable 1)
+        ;; (setup-define :needs
+        ;;   (lambda (executable)
+        ;;     `(unless (executable-find ,executable)
+        ;;        ,(setup-quit)))
+        ;;   :documentation "If EXECUTABLE is not in the path, stop here."
+        ;;   :repeatable 1)
 
         (setup-define :load-from
           (lambda (path)
@@ -127,10 +127,10 @@
         (load-theme 'srcery))
 
       ;; (setup (:package doom-themes)
-      ;;   (load-theme 'doom-one))
+      ;;   (load-theme 'doom-dark+))
 
-      ;; (setup (:package solarized-dark)
-      ;;   (load-theme 'solarized-dark))
+      ;; (setup (:package doom-themes)
+      ;;   (load-theme 'doom-zenburn))
     #+END_SRC
   - 开启自动换行，程序标题栏显示当前标记的文件名
     #+BEGIN_SRC emacs-lisp
@@ -142,27 +142,27 @@
   - modeline设置
     + 显示行号、列号以及当前文件的总字符数
       #+BEGIN_SRC emacs-lisp
-        (setc line-number-mode t
-              column-number-mode t
-              size-indication-mode t)
+        (line-number-mode +1)
+        (column-number-mode +1)
+        (size-indication-mode +1)
       #+END_SRC
   - 高亮当前行
     #+BEGIN_SRC emacs-lisp
-      (setc global-hl-line-mode t)
+      (global-hl-line-mode +1)
     #+END_SRC
   - 高亮配对的括号
     #+BEGIN_SRC emacs-lisp
-      (setc show-paren-mode t
-            show-paren-when-point-in-periphery t)
+      (setq show-paren-when-point-in-periphery t)
+      (show-paren-mode +1)
     #+END_SRC
   - 使用isearch搜索时，显示当前匹配项的数量
     #+BEGIN_SRC emacs-lisp
-      (setc isearch-lazy-count t
+      (setq isearch-lazy-count t
             lazy-count-prefix-format "%s/%s ")
     #+END_SRC
   - whitespace设置
     #+BEGIN_SRC emacs-lisp
-      (setc global-whitespace-mode t)
+      (global-whitespace-mode +1)
       (add-hook 'before-save-hook #'delete-trailing-whitespace)
 
       ;; Don't use different background for tabs.
@@ -229,13 +229,13 @@
       ;;               :slant 'normal
       ;;               :size 13.5)))
       (set-face-attribute 'default nil
-                          :family "霞鹜文楷等宽"
+                          :family "LXGW WenKai Mono"
                           :height 135)
     #+END_SRC
 * 个人使用习惯方面的设置
   - 粘贴时覆盖选中的region
     #+BEGIN_SRC emacs-lisp
-      (setc delete-selection-mode t)
+      (delete-selection-mode +1)
     #+END_SRC
   - 不要自动格式化代码
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -243,7 +243,7 @@
     #+END_SRC
   - 关闭全局eldoc，只在emacs-lisp-mode中打开
     #+BEGIN_SRC emacs-lisp
-      (setc global-eldoc-mode nil)
+      (global-eldoc-mode -1)
       (add-hook 'emacs-lisp-mode-hook (lambda () (eldoc-mode +1)))
     #+END_SRC
   - 括号自动补全
@@ -311,23 +311,23 @@
     #+END_SRC
   - 剪贴板的一些设置
     #+BEGIN_SRC emacs-lisp
-      (setc save-interprogram-paste-before-kill t
+      (setq save-interprogram-paste-before-kill t
             kill-do-not-save-duplicates t
             mouse-yank-at-point t)
     #+END_SRC
   - 记录上次关闭前，光标在文件中的位置
     #+BEGIN_SRC emacs-lisp
-      (setc save-place-mode t
-            save-place-file (locate-user-emacs-file "tmp/places"))
+      (setq save-place-file (locate-user-emacs-file "tmp/places"))
+      (save-place-mode t)
     #+END_SRC
   - 自动读取外部文件对正在编辑的文件的修改
     #+BEGIN_SRC emacs-lisp
-      (setc global-auto-revert-mode t)
+      (global-auto-revert-mode +1)
     #+END_SRC
   - 单行内容过长时关闭一些mode
     有时候会打开一些文件，这些文件里的某一行特别长，而Emacs没有针对这种情况做特殊 处理，会导致整个界面卡死。这里启用so-long，当打开一个具有长行的文件时，它会自动检测并将一些可能导致严重性能的mode关闭， 如font-lock (syntax highlight)。
     #+BEGIN_SRC emacs-lisp
-      (setc global-so-long-mode t)
+      (global-so-long-mode +1)
     #+END_SRC
   - 搜索时大小写敏感
     #+BEGIN_SRC emacs-lisp
@@ -338,7 +338,7 @@
   - 开启org-babel的sql功能
     #+BEGIN_SRC emacs-lisp
       (setup org
-        (:option org-confirm-babel-evaluate nil)
+        (setq org-confirm-babel-evaluate nil)
         (:when-loaded
           (add-to-list 'org-babel-load-languages '(sql . t))))
 
@@ -433,7 +433,7 @@
     YASnippet, a programming template system for Emacs. It loads YASnippet Snippets, a collection of yasnippet snippets for many languages.
     #+BEGIN_SRC emacs-lisp
       (setup (:package yasnippet)
-        (:option yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
+        (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
         (:with-mode yas-minor-mode
           (:unbind "TAB" [(tab)])
           (:hook-into prog-mode))
@@ -445,14 +445,14 @@
   - corfu
     #+BEGIN_SRC emacs-lisp
       (setup (:package corfu)
-        (:option corfu-auto t ;; Enable auto completion
-                 ;; corfu-separator ?_ ;; Set to orderless separator, if not using space
-                 corfu-quit-at-boundary t ;; Automatically quit at word boundary
-                 corfu-quit-no-match t ;; Automatically quit if there is no match
-                 corfu-preview-current nil
-                 corfu-echo-documentation nil
-                 corfu-auto-delay 0.2
-                 corfu-auto-prefix 5)
+        (setq corfu-auto t ;; Enable auto completion
+              ;; corfu-separator ?_ ;; Set to orderless separator, if not using space
+              corfu-quit-at-boundary t ;; Automatically quit at word boundary
+              corfu-quit-no-match t ;; Automatically quit if there is no match
+              corfu-preview-current nil
+              corfu-echo-documentation nil
+              corfu-auto-delay 0.2
+              corfu-auto-prefix 5)
         (:bind-into corfu-map
           "C-d" corfu-info-documentation
           "C-s" corfu-info-location
@@ -496,10 +496,10 @@
     #+END_SRC
 * 搜索功能
   - 使用color-rg搜索
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle yes
       (setup color-rg
         (:load-from "lisp/color-rg")
-        (:option color-rg-max-column 1000)
+        (setq color-rg-max-column 1000)
         (:autoload color-rg-search-project
                    color-rg-read-input
                    color-rg-search-input)
@@ -520,18 +520,24 @@
         (:leader-key "s f" my-color-rg-search-in-directory
                      "/" color-rg-search-project))
     #+END_SRC
+  - deadgrep
+    #+begin_src emacs-lisp :tangle no
+      (setup (:package deadgrep)
+        (global-set-key (kbd "<f5>") #'deadgrep)
+        (modify-coding-system-alist 'process "rg" '(utf-8 . gbk-dos)))
+    #+end_src
   - vertico
     #+BEGIN_SRC emacs-lisp :tangle yes
       (setup (:package vertico)
         ;; Vertico
-        (:option vertico-mode t
-                 vertico-sort-function #'vertico-sort-alpha))
+        (setq vertico-sort-function #'vertico-sort-alpha)
+        (vertico-mode +1))
     #+END_SRC
   - consult
     #+BEGIN_SRC emacs-lisp
       (setup (:package consult)
-        (:option consult-project-root-function #'projectile-project-root
-                 consult-preview-key nil ;; 关闭预览
+        (setq consult-project-root-function #'projectile-project-root
+              consult-preview-key nil ;; 关闭预览
                  )
         (:global [remap switch-to-buffer] #'consult-buffer
                  [remap goto-line] #'consult-goto-line
@@ -583,9 +589,9 @@
         ;; Configure a custom style dispatcher (see the Consult wiki)
         ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
         ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-        (:option completion-styles '(orderless basic)
-                 completion-category-defaults nil
-                 completion-category-overrides '((file (styles basic partial-completion)))))
+        (setq completion-styles '(orderless basic)
+              completion-category-defaults nil
+              completion-category-overrides '((file (styles basic partial-completion)))))
     #+END_SRC
 * 编程相关设置
   - 使用4个空格代替tab
@@ -629,29 +635,29 @@
   - citre
     #+BEGIN_SRC emacs-lisp :tangle no
       (setup (:package citre)
-        (:option citre-enable-imenu-integration nil
-                 ;; Set these if readtags/ctags is not in your path.
-                 citre-readtags-program "/path/to/readtags"
-                 citre-ctags-program "/path/to/ctags"
+        (setq citre-enable-imenu-integration nil
+              ;; Set these if readtags/ctags is not in your path.
+              citre-readtags-program "/path/to/readtags"
+              citre-ctags-program "/path/to/ctags"
 
-                 ;; Set this if you use project management plugin like projectile.  It's
-                 ;; used for things like displaying paths relatively, see its docstring.
-                 citre-project-root-function #'projectile-project-root
+              ;; Set this if you use project management plugin like projectile.  It's
+              ;; used for things like displaying paths relatively, see its docstring.
+              citre-project-root-function #'projectile-project-root
 
-                 ;; Set this if you want to always use one location to create a tags file.
-                 ;; citre-default-create-tags-file-location 'global-cache
+              ;; Set this if you want to always use one location to create a tags file.
+              ;; citre-default-create-tags-file-location 'global-cache
 
-                 ;; See the "Create tags file" section above to know these options
-                 citre-use-project-root-when-creating-tags t
+              ;; See the "Create tags file" section above to know these options
+              citre-use-project-root-when-creating-tags t
 
-                 ;; citre-prompt-language-for-ctags-command t
-                 ;; By default, when you open any file, and a tags file can be found for it,
-                 ;; `citre-mode' is automatically enabled.  If you only want this to work for
-                 ;; certain modes (like `prog-mode'), set it like this.
-                 citre-auto-enable-citre-mode-modes '(prog-mode)
+              ;; citre-prompt-language-for-ctags-command t
+              ;; By default, when you open any file, and a tags file can be found for it,
+              ;; `citre-mode' is automatically enabled.  If you only want this to work for
+              ;; certain modes (like `prog-mode'), set it like this.
+              citre-auto-enable-citre-mode-modes '(prog-mode)
 
-                 citre-enable-capf-integration t
-                 citre-capf-optimize-for-popup t)
+              citre-enable-capf-integration t
+              citre-capf-optimize-for-popup t)
 
         ;; Bind your frequently used commands.  Alternatively, you can define them
         ;; in `citre-mode-map' so you can only use them when `citre-mode' is enabled.
@@ -681,9 +687,9 @@
 * 临时实验配置
   - embark
     #+BEGIN_SRC emacs-lisp :tangle yes
-      (setup (:package marginalia)
-        (require 'marginalia
-        (marginalia-mode)))
+      ;; (setup (:package marginalia)
+      ;;   (require 'marginalia
+      ;;   (marginalia-mode)))
 
       (setup (:package embark)
         (:global "C-." embark-act
@@ -701,7 +707,7 @@
                        (window-parameters (mode-line-format . none)))))
     #+END_SRC
   - eglot
-    #+BEGIN_SRC emacs-lisp :tangle yes
+    #+BEGIN_SRC emacs-lisp :tangle no
       (setup (:package eglot))
       ;;(add-to-list 'eglot-server-programs `(rust-mode . ("rust-analyzer" :initializationOptions (:cargo (:features "all")))))
       (setup (:package rust-mode)
@@ -728,7 +734,8 @@
     #+BEGIN_SRC emacs-lisp
       (setup gcmh
         (:package gcmh)
-        (:option gcmh-mode t
-                 gcmh-high-cons-threshold 16777216) ; 16mb, or 32mb, or 64mb, or *maybe* 128mb, BUT NOT 512mb
-        (setf (alist-get 'gcmh-mode minor-mode-alist) '("")))
+        (setq gcmh-high-cons-threshold 16777216) ; 16mb, or 32mb, or 64mb, or *maybe* 128mb, BUT NOT 512mb
+        (:when-loaded
+          (setf (alist-get 'gcmh-mode minor-mode-alist) '("")))
+        (add-hook 'after-init-hook 'gcmh-mode))
     #+END_SRC
