@@ -2,6 +2,18 @@
 ;; 10% speed up of startup
 (setq gc-cons-threshold most-positive-fixnum)
 
+;; Inhibit resizing Puremacs frame
+(setq frame-inhibit-implied-resize t)
+
+;; To suppress flashing at startup
+(setq-default inhibit-redisplay t
+              inhibit-message t)
+(add-hook 'after-init-hook
+          (lambda ()
+            (setq-default inhibit-redisplay nil
+                          inhibit-message nil)
+            (redisplay)))
+
 ;; Package initialize occurs automatically, before user-init-file is
 ;; loaded, but after early-init-file. We handle package
 ;; initialization, so we must prevent Emacs from doing it early!

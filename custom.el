@@ -6,7 +6,7 @@
  '(custom-safe-themes
    '("c5a81a42df109b02a9a68dfe0ed530080372c1a0bbcb374da77ee3a57e1be719" default))
  '(package-selected-packages
-   '(deadgrep embark-consult doom-themes rust-mode eglot embark marginalia cape setup citre gcmh corfu vertico srcery-theme orderless yasnippet consult projectile symbol-overlay)))
+   '(deadgrep embark-consult doom-themes rust-mode eglot embark cape setup citre gcmh corfu vertico srcery-theme orderless yasnippet consult projectile symbol-overlay)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
