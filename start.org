@@ -521,12 +521,12 @@
       (setup (:package corfu)
         (setq corfu-auto t ;; Enable auto completion
               ;; corfu-separator ?_ ;; Set to orderless separator, if not using space
-              corfu-quit-at-boundary t ;; Automatically quit at word boundary
-              corfu-quit-no-match t ;; Automatically quit if there is no match
-              corfu-preview-current nil
+              ;; corfu-quit-at-boundary t ;; Automatically quit at word boundary
+              ;; corfu-quit-no-match t ;; Automatically quit if there is no match
+              ;; corfu-preview-current nil
               corfu-echo-documentation nil
               corfu-auto-delay 0.2
-              corfu-auto-prefix 5)
+              corfu-auto-prefix 3)
         (:bind-into corfu-map
           "C-d" corfu-info-documentation
           "C-s" corfu-info-location
@@ -815,7 +815,18 @@
     #+END_SRC
   - eglot
     #+BEGIN_SRC emacs-lisp :tangle no
-      (setup (:package eglot))
+      (setup (:package eglot)
+        (add-to-list 'exec-path (locate-user-emacs-file "bin/omnisharp"))
+        ;; (setq eglot-server-programs '((csharp-mode "omnisharp" "-s" "D:/GitHub/ET/ET.sln" "-lsp")))
+        (setq eglot-extend-to-xref t)
+        (define-key eglot-mode-map (kbd "<f12>") 'xref-find-definitions)
+        (define-key eglot-mode-map (kbd "<f2>") 'eglot-rename)
+        (define-key eglot-mode-map (kbd "C-M-\\") 'eglot-format)
+        )
+
+      (setup (:package csharp-mode)
+        (:hook eglot-ensure))
+
       ;;(add-to-list 'eglot-server-programs `(rust-mode . ("rust-analyzer" :initializationOptions (:cargo (:features "all")))))
       (setup (:package rust-mode)
         (:hook eglot-ensure))
