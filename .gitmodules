@@ -1,3 +1,6 @@
 [submodule "lisp/color-rg"]
 	path = lisp/color-rg
 	url = https://github.com/manateelazycat/color-rg.git
+[submodule "lisp/lsp-bridge"]
+	path = lisp/lsp-bridge
+	url = https://github.com/manateelazycat/lsp-bridge.git
