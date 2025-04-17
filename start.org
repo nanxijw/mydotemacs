@@ -25,8 +25,11 @@
     #+END_SRC
   - 一些函数
     #+BEGIN_SRC emacs-lisp :tangle yes
+      (defun my-sub-load-path (dir)
+        (expand-file-name (file-name-concat "lisp" dir) user-emacs-directory))
+
       (defun add-to-load-path (dir)
-        (add-to-list 'load-path (expand-file-name (file-name-concat "lisp" dir) user-emacs-directory)))
+        (add-to-list 'load-path (my-sub-load-path dir)))
 
       (defun ensure-package (package)
         (unless (package-installed-p package)
@@ -424,11 +427,11 @@
     #+END_SRC
   - 使用F3查找光标当前所在位置的symbol
     #+BEGIN_SRC emacs-lisp
-      (ensure-package 'symbol-overlay)
-      (global-set-key [C-f3] #'symbol-overlay-put)
-      (global-set-key [f3] #'symbol-overlay-jump-next)
-      (global-set-key [S-f3] #'symbol-overlay-jump-prev)
-      (global-set-key [C-S-f3] #'symbol-overlay-remove-all)
+      (use-package symbol-overlay
+        :bind (([C-f3] . symbol-overlay-put)
+               ([f3] . symbol-overlay-jump-next)
+               ([S-f3] . symbol-overlay-jump-prev)
+               ([C-S-f3] . symbol-overlay-remove-all)))
     #+END_SRC
     高亮一个symbol后，光标在该symbol上时会自动进入symbol-mode，symbol-overlay-map中快捷键具体如下：
     | i | symbol-overlay-put                | 高亮或取消高亮当前symbol      |
@@ -611,19 +614,27 @@
   - YASnippet
     YASnippet, a programming template system for Emacs. It loads YASnippet Snippets, a collection of yasnippet snippets for many languages.
     #+BEGIN_SRC emacs-lisp
-      (ensure-package 'yasnippet)
-        ;; (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
-        ;; (:with-mode yas-minor-mode
-        ;;   (:unbind "TAB" [(tab)])
-        ;;   (:hook-into prog-mode))
-        (yas-global-mode 1)
-
+      (use-package yasnippet
+        :diminish "YAS"
+        :init
         ;; Created 里面用到了calendar-month-name
-        (autoload #'calendar-month-name "calendar")
+        (autoload #'calendar-month-name "calendar"))
+
+      (yas-global-mode 1)
+
+      ;; (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
+      ;; (:with-mode yas-minor-mode
+      ;;   (:unbind "TAB" [(tab)])
+      ;;   (:hook-into prog-mode))
+
+
+
     #+END_SRC
   - corfu
     #+BEGIN_SRC emacs-lisp :tangle yes
-      (ensure-package' corfu)
+      (use-package corfu
+        :defer t
+        :init
         (setq corfu-auto t ;; Enable auto completion
               corfu-separator ?_ ;; Set to orderless separator, if not using space
               ;; corfu-quit-at-boundary t ;; Automatically quit at word boundary
@@ -632,32 +643,15 @@
               ;; corfu-echo-documentation nil
               ;; corfu-auto-delay 0.2
               corfu-auto-prefix 3)
-        ;; (:bind-into corfu
-        ;;   "C-d" corfu-info-documentation
-        ;;   "C-s" corfu-info-location
-        ;;   "M-SPC" corfu-insert-separator)
-        (add-hook 'prog-mode-hook #'corfu-mode)
 
-      ;; Unbind TAB with corfu-complete，to avoid the conflict with yasnippet
-      (with-eval-after-load 'corfu
-        ;; (define-key corfu-map "	" nil)
-        (define-key corfu-map [(tab)] nil))
+        :config
+        ;; Unbind TAB with corfu-complete，to avoid the conflict with yasnippet
+        (define-key corfu-map [(tab)] nil)
 
-      ;; (ensure-package 'cape)
-      ;;   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-      ;;   (add-to-list 'completion-at-point-functions #'cape-abbrev)
-      ;;   (add-to-list 'completion-at-point-functions #'cape-keyword))
+        :hook (prog-mode . corfu-mode))
     #+END_SRC
   - abbrev
     #+BEGIN_SRC emacs-lisp
-      ;; Swap M-/ and C-M-/
-      ;; (global-set-key (kbd "M-/") 'dabbrev-completion)
-      ;; (global-set-key (kbd "C-M-/") 'dabbrev-expand)
-      ;; (ensure-package 'dabbrev)
-
-      ;; (with-eval-after-load 'dabbrev
-      ;;   (diminish 'abbrev-mode " Abb"))
-
       (use-package dabbrev
         :diminish "Abb")
     #+END_SRC
@@ -743,26 +737,45 @@
     #+END_SRC
   - vertico
     #+BEGIN_SRC emacs-lisp
-      (ensure-package 'vertico)
-      ;; Vertico
-      (setq vertico-sort-function #'vertico-sort-alpha)
-      (with-eval-after-load 'vertico
-        (define-key vertico-map "\C-\l" #'vertico-directory-delete-word))
+      (use-package vertico
+        :demand t
+        :bind (:map vertico-map
+                    ("C-l" . vertico-directory-delete-word)))
+
+      (add-to-load-path "vertico/extensions")
+
+      (use-package vertico-sort
+        :after vertico
+        :ensure nil
+        :config
+        (setq vertico-sort-function #'vertico-sort-alpha))
+
       (vertico-mode +1)
     #+END_SRC
   - consult
     #+BEGIN_SRC emacs-lisp
-      (ensure-package 'consult)
-      (setq consult-project-root-function #'projectile-project-root
-            consult-preview-key nil ;; 关闭预览
-            )
-      (global-set-key [remap switch-to-buffer] 'consult-buffer)
-      (global-set-key [remap goto-line] 'consult-goto-line)
-      (global-set-key (kbd "C-M-y") 'consult-yank-pop)
-      (global-set-key (kbd "M-g i") 'consult-imenu)
-      (global-set-key (kbd "M-g I") 'consult-imenu-multi)
+      (use-package consult
+        :defer t
+        :commands (consult-buffer
+                   consult-recent-file
+                   consult-goto-line
+                   consult-line
+                   consult-fd
+                   consult-imenu
+                   consult-imenu-multi)
 
-      (with-eval-after-load 'consult
+        :bind (("C-M-y" . consult-yank-pop)
+               ("M-g i" . consult-imenu)
+               ("M-g I" . consult-imenu-multi)
+               ([remap goto-line] . consult-goto-line)
+               ([remap switch-to-buffer] . consult-buffer))
+
+        :init
+        (setq consult-project-root-function #'projectile-project-root
+              consult-preview-key nil ;; 关闭预览
+              )
+
+        :config
         (recentf-mode +1)
         (defvar consult--fd-command nil)
         (defun consult--fd-builder (input)
@@ -794,22 +807,22 @@
     #+END_SRC
   - 使用fussy进行过滤和排序补全选项
     #+BEGIN_SRC emacs-lisp
-      (require 'fussy)
-      (push 'fussy completion-styles)
-      (setq
-       ;; For example, project-find-file uses 'project-files which uses
-       ;; substring completion by default. Set to nil to make sure it's using
-       ;; flx.
-       completion-category-defaults nil
-       completion-category-overrides nil)
+      (use-package fussy
+        :demand t
+        :config
+        (push 'fussy completion-styles)
+        (setq
+         ;; For example, project-find-file uses 'project-files which uses
+         ;; substring completion by default. Set to nil to make sure it's using
+         ;; flx.
+         completion-category-defaults nil
+         completion-category-overrides nil))
 
-      ;; (require 'sublime-fuzzy)
-      ;; (setq fussy-score-fn 'fussy-sublime-fuzzy-score)
-      ;;   (sublime-fuzzy-load-dyn)
-
-      (require 'flx-rs)
-      (setq fussy-score-fn 'fussy-flx-rs-score)
-        (flx-rs-load-dyn)
+      (use-package flx-rs
+        :after fussy
+        :config
+        (setq fussy-score-fn 'fussy-flx-rs-score)
+        (flx-rs-load-dyn))
     #+END_SRC
 * 编程相关设置
   - 使用4个空格代替tab
@@ -849,61 +862,6 @@
      #+BEGIN_SRC emacs-lisp :tangle no
        (add-to-list 'auto-mode-alist (cons "\\.list$" 'conf-mode))
      #+END_SRC
-   - citre
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (ensure-package 'citre)
-      (setq citre-enable-imenu-integration nil
-            ;; Set these if readtags/ctags is not in your path.
-            citre-readtags-program "/path/to/readtags"
-            citre-ctags-program "/path/to/ctags"
-
-            ;; Set this if you use project management plugin like projectile.  It's
-            ;; used for things like displaying paths relatively, see its docstring.
-            citre-project-root-function #'projectile-project-root
-
-            ;; Set this if you want to always use one location to create a tags file.
-            ;; citre-default-create-tags-file-location 'global-cache
-
-            ;; See the "Create tags file" section above to know these options
-            citre-use-project-root-when-creating-tags t
-
-            ;; citre-prompt-language-for-ctags-command t
-            ;; By default, when you open any file, and a tags file can be found for it,
-            ;; `citre-mode' is automatically enabled.  If you only want this to work for
-            ;; certain modes (like `prog-mode'), set it like this.
-            citre-auto-enable-citre-mode-modes '(prog-mode)
-
-            citre-enable-capf-integration t
-            citre-capf-optimize-for-popup t)
-
-      ;; Bind your frequently used commands.  Alternatively, you can define them
-      ;; in `citre-mode-map' so you can only use them when `citre-mode' is enabled.
-      (global-set-key (kbd "M-.") 'citre-jump)
-      (global-set-key (kbd "M-,") 'citre-jump-back)
-
-      (transient-define-prefix my-transient-citre ()
-        "Citre" [("j" "Jump" citre-jump)
-                 ("J" "Jump back" citre-jump-back)
-                 ("u" "Update tags" citre-update-this-tags-file)
-                 ("p" "Peek" citre-peek)])
-
-      (transient-append-suffix 'my-transient-root '(0 0 -1) '("t" "Citre" my-transient-citre))
-    #+END_SRC
-    ctags 命令
-    #+BEGIN_SRC text :tangle no
-      ctags
-      -o
-      %TAGFILE%
-      --languages=c++
-      --kinds-c++=df
-      --langmap=c++:.c.h
-      -h .h.c
-      --fields=*
-      --extras=*
-      --input-encoding=GBK
-      --exclude=xgs/*
-      -R
-    #+END_SRC
 * 临时实验配置
 * 快捷键设置
   - 取消一些我不用的快捷键

@@ -49,3 +49,18 @@
 [submodule "lisp/markmacro"]
 	path = lisp/markmacro
 	url = https://github.com/manateelazycat/markmacro.git
+[submodule "lisp/consult"]
+	path = lisp/consult
+	url = https://github.com/minad/consult
+[submodule "lisp/corfu"]
+	path = lisp/corfu
+	url = https://github.com/minad/corfu.git
+[submodule "lisp/vertico"]
+	path = lisp/vertico
+	url = https://github.com/minad/vertico.git
+[submodule "lisp/symbol-overlay"]
+	path = lisp/symbol-overlay
+	url = https://github.com/wolray/symbol-overlay.git
+[submodule "lisp/yasnippet"]
+	path = lisp/yasnippet
+	url = https://github.com/joaotavora/yasnippet.git
