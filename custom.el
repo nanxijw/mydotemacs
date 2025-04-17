@@ -4,9 +4,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("c5a81a42df109b02a9a68dfe0ed530080372c1a0bbcb374da77ee3a57e1be719" default))
+   '("cee5c56dc8b95b345bfe1c88d82d48f89e0f23008b0c2154ef452b2ce348da37" default))
  '(package-selected-packages
-   '(deadgrep embark-consult doom-themes rust-mode eglot embark cape setup citre gcmh corfu vertico srcery-theme orderless yasnippet consult projectile symbol-overlay)))
+   '(ef-themes corfu vertico yasnippet consult symbol-overlay)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

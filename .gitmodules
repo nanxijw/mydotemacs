@@ -4,3 +4,48 @@
 [submodule "lisp/lsp-bridge"]
 	path = lisp/lsp-bridge
 	url = https://github.com/manateelazycat/lsp-bridge.git
+[submodule "lisp/lspce"]
+	path = lisp/lspce
+	url = https://github.com/zbelial/lspce.git
+[submodule "lisp/eglot-booster"]
+	path = lisp/eglot-booster
+	url = https://github.com/jdtsmith/eglot-booster.git
+[submodule "lisp/eaf"]
+	path = lisp/eaf
+	url = https://github.com/emacs-eaf/emacs-application-framework.git
+[submodule "lisp/hotfuzz"]
+	path = lisp/hotfuzz
+	url = https://github.com/axelf4/hotfuzz.git
+[submodule "lisp/fussy"]
+	path = lisp/fussy
+	url = https://github.com/jojojames/fussy.git
+[submodule "lisp/flx"]
+	path = lisp/flx
+	url = https://github.com/lewang/flx.git
+[submodule "lisp/fuzzy-rs"]
+	path = lisp/fuzzy-rs
+	url = https://github.com/Schlechtwetterfront/fuzzy-rs.git
+[submodule "lisp/sublime-fuzzy"]
+	path = lisp/sublime-fuzzy
+	url = https://github.com/jcs-legacy/sublime-fuzzy.git
+[submodule "lisp/flx-rs"]
+	path = lisp/flx-rs
+	url = https://github.com/jcs-elpa/flx-rs.git
+[submodule "lisp/cloel"]
+	path = lisp/cloel
+	url = https://github.com/manateelazycat/cloel.git
+[submodule "lisp/citre"]
+	path = lisp/citre
+	url = https://github.com/universal-ctags/citre.git
+[submodule "lisp/awesome-tray"]
+	path = lisp/awesome-tray
+	url = https://github.com/manateelazycat/awesome-tray.git
+[submodule "lisp/diminish.el"]
+	path = lisp/diminish.el
+	url = https://github.com/myrjola/diminish.el.git
+[submodule "lisp/gptel"]
+	path = lisp/gptel
+	url = https://github.com/karthink/gptel.git
+[submodule "lisp/markmacro"]
+	path = lisp/markmacro
+	url = https://github.com/manateelazycat/markmacro.git

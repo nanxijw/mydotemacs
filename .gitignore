@@ -9,3 +9,11 @@ network-security.data
 eshell/history
 url/cookies
 projectile-bookmarks.eld
+.cache/
+eaf/
+etc/
+eshell/
+projects
+transient/
+org-persist/
+tree-sitter/
