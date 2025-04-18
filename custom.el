@@ -6,7 +6,7 @@
  '(custom-safe-themes
    '("cee5c56dc8b95b345bfe1c88d82d48f89e0f23008b0c2154ef452b2ce348da37"
      default))
- '(package-selected-packages '(ef-themes)))
+ '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

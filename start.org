@@ -21,7 +21,7 @@
     #+END_SRC
   - 解决一些命令行工具乱码问题
     #+BEGIN_SRC emacs-lisp :tangle yes
-      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gb18030-dos))
     #+END_SRC
   - 一些函数
     #+BEGIN_SRC emacs-lisp :tangle yes
@@ -36,6 +36,11 @@
           (unless (assq package package-archive-contents)
             (package-refresh-contents))
           (package-install package)))
+
+      ;; 为一个目录中的所有 .el 文件生成 autoloads
+      ;; PKG-DIR 目录
+      ;; NAME 包名，最后会生成 NAME-autoloads.el 文件
+      ;; (package-generate-autoloads NAME PKG-DIR)
     #+END_SRC
   - 常量定义
     #+BEGIN_SRC emacs-lisp
@@ -182,13 +187,15 @@
   - 主题设置
     目前在用主题 [[https://github.com/srcery-colors/srcery-emacs][srcery]]
     #+BEGIN_SRC emacs-lisp :tangle yes
-      (ensure-package 'ef-themes)
-      (load-theme 'ef-night)
+      (load-theme 'modus-vivendi)
     #+END_SRC
     其他一些不错的主题
     #+BEGIN_SRC emacs-lisp :tangle no
       (ensure-package 'srcery-theme)
       (load-theme 'srcery)
+
+      (ensure-package 'ef-themes)
+      (load-theme 'ef-night)
 
       (ensure-package 'color-theme-sanityinc-tomorrow)
       (load-theme 'sanityinc-tomorrow-night)
@@ -209,6 +216,7 @@
       (load-theme 'doom-tomorrow-night)
 
       (load-theme 'modus-vivendi)
+      (load-theme 'modus-operandi)
       (load-theme 'tango-dark)
     #+END_SRC
   - 开启自动换行，程序标题栏显示当前标记的文件名
@@ -283,7 +291,6 @@
                                trailing         ; trailing blanks
                                tabs             ; tabs (show by face)
                                tab-mark))       ; tabs (show by symbol)
-
     #+END_SRC
   - 设置鼠标滚轮一次滚动3行，使得滚动不会那么跳跃
     #+BEGIN_SRC emacs-lisp
@@ -390,6 +397,22 @@
          (setq save-interprogram-paste-before-kill t
                kill-do-not-save-duplicates t
                mouse-yank-at-point t)
+       #+END_SRC
+    6. 快速移动一行
+       #+BEGIN_SRC emacs-lisp
+         (defun move-line-up ()
+           (interactive)
+           (transpose-lines 1)
+           (forward-line -2))
+
+         (defun move-line-down ()
+           (interactive)
+           (forward-line 1)
+           (transpose-lines 1)
+           (forward-line -1))
+
+         (global-set-key (kbd "M-<up>") 'move-line-up)
+         (global-set-key (kbd "M-<down>") 'move-line-down)
        #+END_SRC
   - 不要自动格式化代码
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -554,7 +577,7 @@
           "Use `fd' to list files in DIR."
           (let* ((default-directory dir)
                  (localdir (file-local-name (expand-file-name dir)))
-                 (command (format "fd -H -t f -0 . %s" localdir)))
+                 (command (format "fd -H -t f -0 --path-separator / . %s" localdir)))
             (project--remote-file-names
              (sort (split-string (shell-command-to-string command) "\0" t)
                    #'string<))))
@@ -605,30 +628,35 @@
       #+END_SRC
   - Projectile
     #+BEGIN_SRC emacs-lisp :tangle no
-      (ensure-package 'projectile)
-      (autoload #'projectile-project-root "projectile")
-      (with-eval-after-load 'projectile
-        (setf (alist-get 'projectile-mode minor-mode-alist) '(" Proj")))
+      (use-package projectile
+        :demand t
+        :commands (projectile-project-root)
+        :diminish " P"
+        :init
+        (setq projectile-indexing-method 'alien
+              projectile-svn-command "fd . -0 --type f --color=nerver"
+              projectile-enable-caching nil
+              projectile-project-enable-cmd-caching nil))
+
+      (projectile-mode +1)
     #+END_SRC
 * 自动补全
   - YASnippet
     YASnippet, a programming template system for Emacs. It loads YASnippet Snippets, a collection of yasnippet snippets for many languages.
     #+BEGIN_SRC emacs-lisp
+      ;; Created 里面用到了calendar-month-name
+      (autoload #'calendar-month-name "calendar")
+
       (use-package yasnippet
         :diminish "YAS"
         :init
-        ;; Created 里面用到了calendar-month-name
-        (autoload #'calendar-month-name "calendar"))
+        (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets")))))
 
       (yas-global-mode 1)
 
-      ;; (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
       ;; (:with-mode yas-minor-mode
       ;;   (:unbind "TAB" [(tab)])
       ;;   (:hook-into prog-mode))
-
-
-
     #+END_SRC
   - corfu
     #+BEGIN_SRC emacs-lisp :tangle yes
@@ -638,10 +666,10 @@
         (setq corfu-auto t ;; Enable auto completion
               corfu-separator ?_ ;; Set to orderless separator, if not using space
               ;; corfu-quit-at-boundary t ;; Automatically quit at word boundary
-              ;; corfu-quit-no-match t ;; Automatically quit if there is no match
-              ;; corfu-preview-current nil
-              ;; corfu-echo-documentation nil
-              ;; corfu-auto-delay 0.2
+              corfu-quit-no-match t ;; Automatically quit if there is no match
+              corfu-preview-current nil
+              corfu-echo-documentation nil
+              corfu-auto-delay 0.5
               corfu-auto-prefix 3)
 
         :config
@@ -690,7 +718,9 @@
       (defun backup-each-save-filter (filename)
         (let ((ignored-filenames
                '("^/tmp" "\\.cache$" "\\.emacs-places$"
-                 "\\.recentf$" ".newsrc\\(\\.eld\\)?"))
+                 "\\.recentf$" ".newsrc\\(\\.eld\\)?"
+                 "sql\\.org$" "lpc\\.c$"
+                 "/Local/Temp/babel-[a-zA-Z0-9]\\{6\\}/"))
               (matched-ignored-filename nil))
           (mapc
            (lambda (x)
@@ -700,7 +730,7 @@
           (not matched-ignored-filename)))
 
       (setq backup-each-save-filter-function 'backup-each-save-filter)
-      (setq backup-each-save-time-format "%Y%m%d_%H%M%S")
+      (setq backup-each-save-time-format "%Y%m%d_%H%M")
       (add-hook 'after-save-hook 'backup-each-save)
       (add-hook 'kill-emacs-hook #'(lambda () (backup-each-save-clean-up 15)))
     #+END_SRC
@@ -708,12 +738,11 @@
   - 使用color-rg搜索
     #+BEGIN_SRC emacs-lisp :tangle yes
       (setq color-rg-max-column 1000
-            color-rg-search-no-ignore-file nil)
+            color-rg-search-ignore-rules "")
 
       (autoload #'color-rg-search-project "color-rg")
       (autoload #'color-rg-read-input "color-rg")
       (autoload #'color-rg-search-input "color-rg")
-      (autoload #'my-color-rg-search-in-directory "color-rg")
 
       (with-eval-after-load 'color-rg
         (defun my-color-rg-in-string-p (&optional state)
@@ -727,7 +756,7 @@
         ;; (advice-add 'color-rg-project-root-dir :override #'my-color-rg-project-root-dir)
         )
 
-      ;; (modify-coding-system-alist 'process "rg" '(utf-8 . gbk-dos))
+      ;; (modify-coding-system-alist 'process "rg" '(utf-8 . gb18030-dos))
 
       (defun my-color-rg-search-in-directory ()
         (interactive)
@@ -737,43 +766,30 @@
     #+END_SRC
   - vertico
     #+BEGIN_SRC emacs-lisp
-      (use-package vertico
-        :demand t
-        :bind (:map vertico-map
-                    ("C-l" . vertico-directory-delete-word)))
-
       (add-to-load-path "vertico/extensions")
+      (require 'vertico-autoloads)
+      (require 'vertico-extensions-autoloads)
 
-      (use-package vertico-sort
-        :after vertico
-        :ensure nil
-        :config
-        (setq vertico-sort-function #'vertico-sort-alpha))
+      (with-eval-after-load 'vertico
+        (setq vertico-sort-function #'vertico-sort-alpha)
+        (define-key vertico-map (kbd "C-l") #'vertico-directory-delete-word))
 
       (vertico-mode +1)
     #+END_SRC
   - consult
     #+BEGIN_SRC emacs-lisp
       (use-package consult
-        :defer t
-        :commands (consult-buffer
-                   consult-recent-file
-                   consult-goto-line
-                   consult-line
-                   consult-fd
-                   consult-imenu
-                   consult-imenu-multi)
+        :init
+        (require 'consult-autoloads)
+        (setq consult-project-root-function #'projectile-project-root
+              consult-preview-key nil ;; 关闭预览
+              )
 
         :bind (("C-M-y" . consult-yank-pop)
                ("M-g i" . consult-imenu)
                ("M-g I" . consult-imenu-multi)
                ([remap goto-line] . consult-goto-line)
                ([remap switch-to-buffer] . consult-buffer))
-
-        :init
-        (setq consult-project-root-function #'projectile-project-root
-              consult-preview-key nil ;; 关闭预览
-              )
 
         :config
         (recentf-mode +1)
@@ -849,18 +865,43 @@
                      ;; 关闭对多行字符串的支持。该功能严重影响性能
                      (setq c-multiline-string-start-char nil)
 
-                     (define-key pike-mode-map [(f2)] 'p01/id-text-at-point)
+                     ;; (define-key pike-mode-map [(f2)] 'p01/id-text-at-point)
                      (define-key pike-mode-map "," nil) ;; 输入“,”时不重新格式化代码
                      (define-key pike-mode-map "(" nil) ;; 输入“(”时不重新格式化代码
                      (define-key pike-mode-map ")" nil) ;; 输入“)”时不重新格式化代码
                      (define-key pike-mode-map ":" nil) ;; 输入“:”时不重新格式化代码
                      (define-key pike-mode-map ";" nil) ;; 输入“;”时不重新格式化代码
                      (define-key pike-mode-map "/" nil) ;; 输入“/”时不重新格式化代码
+                     (setq fill-column 40)
+                     (display-fill-column-indicator-mode + 1)
+                     (setq mode-name "LPC")
                      ))
      #+END_SRC
    - 使用conf-mode打开list文件
      #+BEGIN_SRC emacs-lisp :tangle no
        (add-to-list 'auto-mode-alist (cons "\\.list$" 'conf-mode))
+     #+END_SRC
+   - citre
+     #+BEGIN_SRC emacs-lisp :tangle no
+       (use-package citre
+         :diminish " CT"
+         :init
+         (require 'citre-autoloads)
+         (require 'citre-config)
+
+         :config
+         (setq-default citre-enable-imenu-integration nil)
+         (setq citre-gtags-program "C:/Programs/gnuglobal653/bin/gtags.exe"
+               citre-global-program "C:/Programs/gnuglobal653/bin/global.exe"
+               citre-gtags-args '("--compact")
+               citre-global-completion-case-sensitive nil
+               citre-readtags-program "C:/Programs/ctags/readtags.exe"
+               citre-ctags-program "C:/Programs/ctags/ctags.exe"
+               citre-project-root-function #'projectile-project-root
+               citre-capf-optimize-for-popup t
+               citre-default-create-tags-file-location 'global-cache
+               citre-auto-enable-citre-mode-backends '(global)
+               citre-auto-enable-citre-mode-modes '(pike-mode)))
      #+END_SRC
 * 临时实验配置
 * 快捷键设置
@@ -881,21 +922,40 @@
     #+END_SRC
   - transient
     #+BEGIN_SRC emacs-lisp :tangle yes
-      (global-set-key (kbd "M-i") 'my-transient-root)
-
       (require 'transient)
       (transient-define-prefix my-transient-root ()
-        "Root" [["One Step" ("/" "color-rg project" color-rg-search-project :transient nil)]
-                ["Search"
-                 ("sf" "In Folder" my-color-rg-search-in-directory :transient nil)
-                 ("ss" "In Current Buffer" consult-line :transient nil)
-                 ("sj" "Imenu" consult-imenu :transient nil)]
-                ["File"
-                 ("fr" "Recent File" consult-recent-file :transient nil)
-                 ("fd" "fd" consult-fd :transient nil)]
-                ["Buffer" ("bb" "buffer" consult-buffer :transient nil)]])
-    #+END_SRC
+        "Root" [["One Step" ("/" "Search in project" color-rg-search-project :transient nil)]
+                ["Jump to"
+                 ("jf" "Function" consult-imenu :transient nil)
+                 ("jl" "Line" consult-goto-line :transient nil)]
 
+                ["Search"
+                 ("s/" "In Project" color-rg-search-project :transient nil)
+                 ("ss" "In Current Buffer" consult-line :transient nil)
+                 ("sj" "Imenu" consult-imenu :transient nil)
+                 ("sf" "In Folder" my-color-rg-search-in-directory :transient nil)]
+
+                ;; ["Tags"
+                ;;  ("tu" "Update" citre-global-update-database :transient nil)
+                ;;  ("tj" "Jump" citre-jump :transient nil)
+                ;;  ("tJ" "Jump Back" citre-jump-back :transient nil)
+                ;;  ("t1" "Query" (lambda ()
+                ;;                  (interactive)
+                ;;                  (citre-query-jump 1)) :transient nil)
+                ;;  ("tp" "Peek" citre-peek :transient nil)]
+
+                ["Buffer"
+                 ("bd" "Kill" kill-current-buffer :transient nil)
+                 ("bb" "List" consult-buffer :transient nil)]
+
+                ["File"
+                 ("ff" "In Project" project-find-file :transient nil)
+                 ("fd" "fd" consult-fd :transient nil)
+                 ("fr" "Recent" consult-recent-file :transient nil)]
+                ["Buffer" ("bb" "buffer" consult-buffer :transient nil)]])
+
+      (global-set-key (kbd "M-i") 'my-transient-root)
+    #+END_SRC
 * 最后执行
   - 设置GC
     #+begin_src emacs-lisp

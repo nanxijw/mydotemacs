@@ -64,3 +64,6 @@
 [submodule "lisp/yasnippet"]
 	path = lisp/yasnippet
 	url = https://github.com/joaotavora/yasnippet.git
+[submodule "lisp/projectile"]
+	path = lisp/projectile
+	url = https://github.com/bbatsov/projectile.git
