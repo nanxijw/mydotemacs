@@ -22,9 +22,6 @@
 [submodule "lisp/flx"]
 	path = lisp/flx
 	url = https://github.com/lewang/flx.git
-[submodule "lisp/fuzzy-rs"]
-	path = lisp/fuzzy-rs
-	url = https://github.com/Schlechtwetterfront/fuzzy-rs.git
 [submodule "lisp/sublime-fuzzy"]
 	path = lisp/sublime-fuzzy
 	url = https://github.com/jcs-legacy/sublime-fuzzy.git

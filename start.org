@@ -31,7 +31,7 @@
       (defun add-to-load-path (dir)
         (add-to-list 'load-path (my-sub-load-path dir)))
 
-      (defun ensure-package (package)
+      (defun ensure-pkg (package)
         (unless (package-installed-p package)
           (unless (assq package package-archive-contents)
             (package-refresh-contents))
@@ -41,6 +41,13 @@
       ;; PKG-DIR 目录
       ;; NAME 包名，最后会生成 NAME-autoloads.el 文件
       ;; (package-generate-autoloads NAME PKG-DIR)
+      (defun ensure-pkg-autoloads (name &optional pkg-dir)
+        (let ((auto-name (intern (concat name "-autoloads"))))
+          (unless (require auto-name nil t)
+            (unless pkg-dir
+              (setq pkg-dir name))
+            (package-generate-autoloads name (my-sub-load-path pkg-dir))
+            (require auto-name))))
     #+END_SRC
   - 常量定义
     #+BEGIN_SRC emacs-lisp
@@ -191,28 +198,28 @@
     #+END_SRC
     其他一些不错的主题
     #+BEGIN_SRC emacs-lisp :tangle no
-      (ensure-package 'srcery-theme)
+      (ensure-pkg 'srcery-theme)
       (load-theme 'srcery)
 
-      (ensure-package 'ef-themes)
+      (ensure-pkg 'ef-themes)
       (load-theme 'ef-night)
 
-      (ensure-package 'color-theme-sanityinc-tomorrow)
+      (ensure-pkg 'color-theme-sanityinc-tomorrow)
       (load-theme 'sanityinc-tomorrow-night)
 
-      (ensure-package 'doom-themes)
+      (ensure-pkg 'doom-themes)
       (load-theme 'doom-one)
 
-      (ensure-package 'doom-themes)
+      (ensure-pkg 'doom-themes)
       (load-theme 'doom-dark+)
 
-      (ensure-package 'doom-themes)
+      (ensure-pkg 'doom-themes)
       (load-theme 'doom-zenburn)
 
-      (ensure-package 'doom-themes)
+      (ensure-pkg 'doom-themes)
       (load-theme 'doom-gruvbox)
 
-      (ensure-package 'doom-themes)
+      (ensure-pkg 'doom-themes)
       (load-theme 'doom-tomorrow-night)
 
       (load-theme 'modus-vivendi)
@@ -424,7 +431,7 @@
       (add-hook 'emacs-lisp-mode-hook (lambda () (eldoc-mode +1)))
     #+END_SRC
   - 括号自动补全
-    #+BEGIN_SRC emacs-lisp :tangle yes
+    #+BEGIN_SRC emacs-lisp :tangle no
       (electric-pair-mode +1)
     #+END_SRC
   - 不锁定文件
@@ -577,7 +584,7 @@
           "Use `fd' to list files in DIR."
           (let* ((default-directory dir)
                  (localdir (file-local-name (expand-file-name dir)))
-                 (command (format "fd -H -t f -0 --path-separator / . %s" localdir)))
+                 (command (format "fd -H -t f -0 --path-separator / -E .git/ . %s" localdir)))
             (project--remote-file-names
              (sort (split-string (shell-command-to-string command) "\0" t)
                    #'string<))))
@@ -634,7 +641,7 @@
         :diminish " P"
         :init
         (setq projectile-indexing-method 'alien
-              projectile-svn-command "fd . -0 --type f --color=nerver"
+              projectile-svn-command "fd . -0 --type f --color=never"
               projectile-enable-caching nil
               projectile-project-enable-cmd-caching nil))
 
@@ -681,7 +688,7 @@
   - abbrev
     #+BEGIN_SRC emacs-lisp
       (use-package dabbrev
-        :diminish "Abb")
+        :diminish " Abb")
     #+END_SRC
 * 文件备份
   - emacs内置的文件备份
@@ -766,9 +773,10 @@
     #+END_SRC
   - vertico
     #+BEGIN_SRC emacs-lisp
+      (ensure-pkg-autoloads "vertico")
+
       (add-to-load-path "vertico/extensions")
-      (require 'vertico-autoloads)
-      (require 'vertico-extensions-autoloads)
+      (ensure-pkg-autoloads "vertico-extensions" "vertico/extensions")
 
       (with-eval-after-load 'vertico
         (setq vertico-sort-function #'vertico-sort-alpha)
@@ -778,10 +786,11 @@
     #+END_SRC
   - consult
     #+BEGIN_SRC emacs-lisp
+      (ensure-pkg-autoloads "consult")
+
       (use-package consult
         :init
-        (require 'consult-autoloads)
-        (setq consult-project-root-function #'projectile-project-root
+        (setq ;; consult-project-root-function #'projectile-project-root
               consult-preview-key nil ;; 关闭预览
               )
 
@@ -857,25 +866,25 @@
      #+BEGIN_SRC emacs-lisp :tangle no
        (add-to-list 'auto-mode-alist (cons "/server_scripts/.+\\.[ch]$" 'pike-mode))
        (add-hook 'pike-mode-hook
-                 #'(lambda ()
-                     (set (make-local-variable 'imenu-generic-expression)
-                          (list
-                           (list nil "^\\<[^()\n]*[^[:alnum:]_:<>~]\\([[:alpha:]_][[:alnum:]_:<>~]*\\)\\([     \n]\\|\\\\\n\\)*(\\([   \n]\\|\\\\\n\\)*\\([^   \n(*][^()]*\\(([^()]*)[^()]*\\)*\\)?)\\([   \n]\\|\\\\\n\\)*[^  \n;(]" 1)))
+                 '(lambda ()
+                    (set (make-local-variable 'imenu-generic-expression)
+                         (list
+                          (list nil "^\\<[^()\n]*[^[:alnum:]_:<>~]\\([[:alpha:]_][[:alnum:]_:<>~]*\\)\\([     \n]\\|\\\\\n\\)*(\\([   \n]\\|\\\\\n\\)*\\([^   \n(*][^()]*\\(([^()]*)[^()]*\\)*\\)?)\\([   \n]\\|\\\\\n\\)*[^  \n;(]" 1)))
 
-                     ;; 关闭对多行字符串的支持。该功能严重影响性能
-                     (setq c-multiline-string-start-char nil)
+                    ;; 关闭对多行字符串的支持。该功能严重影响性能
+                    (setq c-multiline-string-start-char nil)
 
-                     ;; (define-key pike-mode-map [(f2)] 'p01/id-text-at-point)
-                     (define-key pike-mode-map "," nil) ;; 输入“,”时不重新格式化代码
-                     (define-key pike-mode-map "(" nil) ;; 输入“(”时不重新格式化代码
-                     (define-key pike-mode-map ")" nil) ;; 输入“)”时不重新格式化代码
-                     (define-key pike-mode-map ":" nil) ;; 输入“:”时不重新格式化代码
-                     (define-key pike-mode-map ";" nil) ;; 输入“;”时不重新格式化代码
-                     (define-key pike-mode-map "/" nil) ;; 输入“/”时不重新格式化代码
-                     (setq fill-column 40)
-                     (display-fill-column-indicator-mode + 1)
-                     (setq mode-name "LPC")
-                     ))
+                    ;; (define-key pike-mode-map [(f2)] 'p01/id-text-at-point)
+                    (define-key pike-mode-map "," nil) ;; 输入“,”时不重新格式化代码
+                    (define-key pike-mode-map "(" nil) ;; 输入“(”时不重新格式化代码
+                    (define-key pike-mode-map ")" nil) ;; 输入“)”时不重新格式化代码
+                    (define-key pike-mode-map ":" nil) ;; 输入“:”时不重新格式化代码
+                    (define-key pike-mode-map ";" nil) ;; 输入“;”时不重新格式化代码
+                    (define-key pike-mode-map "/" nil) ;; 输入“/”时不重新格式化代码
+                    (setq fill-column 40)
+                    (display-fill-column-indicator-mode +1)
+                    (setq mode-name "LPC")
+                    ))
      #+END_SRC
    - 使用conf-mode打开list文件
      #+BEGIN_SRC emacs-lisp :tangle no
@@ -883,10 +892,11 @@
      #+END_SRC
    - citre
      #+BEGIN_SRC emacs-lisp :tangle no
+       (ensure-pkg-autoloads "citre-autoloads")
+
        (use-package citre
          :diminish " CT"
          :init
-         (require 'citre-autoloads)
          (require 'citre-config)
 
          :config
@@ -897,7 +907,7 @@
                citre-global-completion-case-sensitive nil
                citre-readtags-program "C:/Programs/ctags/readtags.exe"
                citre-ctags-program "C:/Programs/ctags/ctags.exe"
-               citre-project-root-function #'projectile-project-root
+               ;; citre-project-root-function #'projectile-project-root
                citre-capf-optimize-for-popup t
                citre-default-create-tags-file-location 'global-cache
                citre-auto-enable-citre-mode-backends '(global)
@@ -939,7 +949,7 @@
                 ;;  ("tu" "Update" citre-global-update-database :transient nil)
                 ;;  ("tj" "Jump" citre-jump :transient nil)
                 ;;  ("tJ" "Jump Back" citre-jump-back :transient nil)
-                ;;  ("t1" "Query" (lambda ()
+                ;;  ("tq" "Query" (lambda ()
                 ;;                  (interactive)
                 ;;                  (citre-query-jump 1)) :transient nil)
                 ;;  ("tp" "Peek" citre-peek :transient nil)]
@@ -951,8 +961,7 @@
                 ["File"
                  ("ff" "In Project" project-find-file :transient nil)
                  ("fd" "fd" consult-fd :transient nil)
-                 ("fr" "Recent" consult-recent-file :transient nil)]
-                ["Buffer" ("bb" "buffer" consult-buffer :transient nil)]])
+                 ("fr" "Recent" consult-recent-file :transient nil)]])
 
       (global-set-key (kbd "M-i") 'my-transient-root)
     #+END_SRC
