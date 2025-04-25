@@ -20,7 +20,7 @@
       (add-to-list 'exec-path (locate-user-emacs-file "bin"))
     #+END_SRC
   - 解决一些命令行工具乱码问题
-    #+BEGIN_SRC emacs-lisp :tangle yes
+    #+BEGIN_SRC emacs-lisp :tangle no
       (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gb18030-dos))
     #+END_SRC
   - 一些函数
@@ -91,14 +91,6 @@
         (string-equal "root" (getenv "USER"))
         "Are you using ROOT user?")
 
-      (defconst emacs/>=27p
-        (>= emacs-major-version 27)
-        "Emacs is 27 or above.")
-
-      (defconst emacs/>=28p
-        (>= emacs-major-version 28)
-        "Emacs is 28 or above.")
-
       (defconst emacs/>=29p
         (>= emacs-major-version 29)
         "Emacs is 29 or above.")
@@ -150,7 +142,7 @@
     #+END_SRC
 * 包管理器
   - 设置使用国内镜像
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       ;; MelpaPackages
       ;; Select the folder to store packages
       ;; Comment / Uncomment to use desired sites
@@ -241,8 +233,8 @@
         (size-indication-mode +1)
       #+END_SRC
     + diminish
-      #+BEGIN_SRC emacs-lisp :tangle yes
-        (use-package diminish)
+      #+BEGIN_SRC emacs-lisp
+        (ensure-pkg-autoloads "diminish" "diminish.el")
       #+END_SRC
   - 高亮当前行
     #+BEGIN_SRC emacs-lisp
@@ -310,23 +302,30 @@
   - 字体设置
     1. 使用中英文等高、等宽的字体 [[https://github.com/lxgw/LxgwWenKai][霞鹜文楷]]
        #+BEGIN_SRC emacs-lisp
-         (set-face-attribute
-                   'default nil
-                   :font (font-spec :name "Unifont"
-                                    :weight 'normal
-                                    :slant 'normal
-                                    :pixelsize 16
-                                    :size 16
-                                    :antialias 'subpixel))
-
-         ;; (set-face-attribute 'default nil
-         ;;                     :font (font-spec
-         ;;                            :name "LXGW WenKai Mono"
+         ;; (set-face-attribute
+         ;;           'default nil
+         ;;           :font (font-spec :name "Unifont"
          ;;                            :weight 'normal
          ;;                            :slant 'normal
          ;;                            :pixelsize 16
          ;;                            :size 16
          ;;                            :antialias 'subpixel))
+
+         ;; ;; Unifont使窗口宽度计算错误，会导致 (split-window-sensibly) 总是上下分割，这里修正一下
+         ;; (setq split-height-threshold 160)
+         ;; (setq split-width-threshold 40)
+
+         ;; ;; Unifont的fill-column
+         ;; (setq-default fill-column 40)
+
+         (set-face-attribute 'default nil
+                             :font (font-spec
+                                    :name "LXGW WenKai Mono"
+                                    :weight 'normal
+                                    :slant 'normal
+                                    :pixelsize 16
+                                    :size 16
+                                    :antialias 'subpixel))
 
          ;; (set-face-attribute
          ;;           'default nil
@@ -458,6 +457,7 @@
   - 使用F3查找光标当前所在位置的symbol
     #+BEGIN_SRC emacs-lisp
       (use-package symbol-overlay
+        :defer t
         :bind (([C-f3] . symbol-overlay-put)
                ([f3] . symbol-overlay-jump-next)
                ([S-f3] . symbol-overlay-jump-prev)
@@ -654,12 +654,18 @@
       ;; Created 里面用到了calendar-month-name
       (autoload #'calendar-month-name "calendar")
 
-      (use-package yasnippet
-        :diminish "YAS"
-        :init
-        (setq yas-snippet-dirs (list (expand-file-name (locate-user-emacs-file "etc/snippets")))))
+      (autoload #'yas-minor-mode "yasnippet")
+      (autoload #'yas-reload-all "yasnippet")
 
-      (yas-global-mode 1)
+      (setq yas-snippet-dirs
+            (list (expand-file-name (locate-user-emacs-file "etc/snippets"))))
+
+      (add-hook 'org-mode-hook #'yas-minor-mode)
+      (add-hook 'pike-mode-hook #'yas-minor-mode)
+
+      (with-eval-after-load 'yasnippet
+        (yas-reload-all)
+        (diminish 'yas-minor-mode " YAS"))
 
       ;; (:with-mode yas-minor-mode
       ;;   (:unbind "TAB" [(tab)])
@@ -688,6 +694,7 @@
   - abbrev
     #+BEGIN_SRC emacs-lisp
       (use-package dabbrev
+        :defer t
         :diminish " Abb")
     #+END_SRC
 * 文件备份
@@ -789,6 +796,7 @@
       (ensure-pkg-autoloads "consult")
 
       (use-package consult
+        :defer t
         :init
         (setq ;; consult-project-root-function #'projectile-project-root
               consult-preview-key nil ;; 关闭预览
@@ -881,7 +889,6 @@
                     (define-key pike-mode-map ":" nil) ;; 输入“:”时不重新格式化代码
                     (define-key pike-mode-map ";" nil) ;; 输入“;”时不重新格式化代码
                     (define-key pike-mode-map "/" nil) ;; 输入“/”时不重新格式化代码
-                    (setq fill-column 40)
                     (display-fill-column-indicator-mode +1)
                     (setq mode-name "LPC")
                     ))
@@ -892,9 +899,10 @@
      #+END_SRC
    - citre
      #+BEGIN_SRC emacs-lisp :tangle no
-       (ensure-pkg-autoloads "citre-autoloads")
+       (ensure-pkg-autoloads "citre")
 
        (use-package citre
+         :defer t
          :diminish " CT"
          :init
          (require 'citre-config)
@@ -967,7 +975,7 @@
     #+END_SRC
 * 最后执行
   - 设置GC
-    #+begin_src emacs-lisp
+    #+BEGIN_SRC emacs-lisp
       (defun my/setup-gc()
         (setq
          gc-cons-threshold (* 4 1024 1024)
@@ -977,12 +985,13 @@
          ;; Don’t compact font caches during GC.
          inhibit-compacting-font-caches t))
       (add-hook 'after-init-hook #'my/setup-gc)
-
-      ;; 把gc信息展示在 header line 上
-      ;; (setq-default
-      ;;    header-line-format
-      ;;    '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
-    #+end_src
+    #+END_SRC
+    把gc信息展示在 header line 上
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (setq-default
+       header-line-format
+       '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
+    #+END_SRC
   - 显示启动时间
     #+BEGIN_SRC emacs-lisp :tangle no
       (emacs-init-time)
